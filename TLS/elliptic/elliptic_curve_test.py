@@ -119,9 +119,15 @@ class TestEllipticCurve(unittest.TestCase):
 
     def test_multiply_by_number(self):
         ec = EllipticCurve('A')
+        a = ec.one()
         for k in [-1233535, 1231, 0, -1, 1, 1231341]:
-            self.assertTrue(ec.is_on_curve(ec.multiply_by_number(ec.one(), k)))
-        pass
+            self.assertTrue(ec.is_on_curve(ec.multiply_by_number(a, k)))
+        mul = ec.multiply_by_number
+        self.assertEqual(mul(mul(a, 10), 10), mul(a, 100))
+        self.assertEqual(mul(mul(a, 2), -3), mul(a, -6))
+        self.assertEqual(mul(mul(a, -4), 7), mul(a, -28))
+        self.assertEqual(mul(mul(a, 123), -122), mul(a, 1))
+        self.assertEqual(mul(a, 0), a)
 
     def test_is_on_curve(self):
         pass
