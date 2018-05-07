@@ -1,3 +1,9 @@
+from collections import namedtuple
+
+
+Point = namedtuple('Point', ['x', 'y', 'z'])
+
+
 class EllipticCurve:
     def __init__(self, curve_id):
         pass
@@ -12,4 +18,5 @@ class EllipticCurve:
         pass
 
     def is_on_curve(self, point):
-        pass
+        right_part = point.x ** 3 + self.a * point.x * point.z ** 2 + self.b * point.z ** 3
+        return point.y ** 2 * point.z == right_part
