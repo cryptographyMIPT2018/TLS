@@ -57,4 +57,5 @@ class EllipticCurve:
 
     def is_on_curve(self, point):
         right_part = point.x ** 3 + self.a * point.x * point.z ** 2 + self.b * point.z ** 3
-        return point.y ** 2 * point.z == right_part
+        left_part = point.y ** 2 * point.z
+        return (right_part - left_part) % self.p == 0
