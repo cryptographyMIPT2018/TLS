@@ -113,11 +113,14 @@ class TestEllipticCurve(unittest.TestCase):
 
     def test_correctness_of_parameters(self):
         ec = EllipticCurve('A')
-        self.assertTrue(ec.is_on_curve(MakePoint(ec.x, ec.y)))
+        self.assertTrue(ec.is_on_curve(ec.one()))
         ec = EllipticCurve('B')
-        self.assertTrue(ec.is_on_curve(MakePoint(ec.x, ec.y)))
+        self.assertTrue(ec.is_on_curve(ec.one()))
 
     def test_multiply_by_number(self):
+        ec = EllipticCurve('A')
+        for k in [-1233535, 1231, 0, -1, 1, 1231341]:
+            self.assertTrue(ec.is_on_curve(ec.multiply_by_number(ec.one(), k)))
         pass
 
     def test_is_on_curve(self):

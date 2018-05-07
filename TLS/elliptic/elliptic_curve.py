@@ -34,6 +34,9 @@ class EllipticCurve:
         assert(curve_id in self.PARAMETERS)
         self.__dict__.update(self.PARAMETERS[curve_id])
 
+    def one(self):
+        return MakePoint(self.x, self.y)
+
     def summ(self, point_a, point_b):
         pass
 
