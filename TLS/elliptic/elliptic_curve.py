@@ -1,10 +1,8 @@
-from collections import namedtuple
-
-
-Point = namedtuple('Point', ['x', 'y', 'z'])
-
-def MakePoint(x, y, z=1):
-    return Point(x, y, z)
+class Point:
+    def __init__(self, x, y, z=1):
+        self.x = x
+        self.y = y
+        self.z = z
 
 
 class EllipticCurve:
@@ -34,8 +32,11 @@ class EllipticCurve:
         assert(curve_id in self.PARAMETERS)
         self.__dict__.update(self.PARAMETERS[curve_id])
 
-    def one(self):
-        return MakePoint(self.x, self.y)
+    def get_forming(self):
+        return Point(self.x, self.y)
+
+    def get_zero(self):
+        return Point(0, 1, 0)
 
     def summ(self, point_a, point_b):
         pass
@@ -44,8 +45,8 @@ class EllipticCurve:
         pass
 
     def multiply_by_number(self, point, number):
-        result = self.p
-        point_power = self.point
+        result = self.get_zero()
+        point_power = point
         number = number % self.m
 
         while True:
