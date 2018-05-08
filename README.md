@@ -4,6 +4,8 @@ realization of Russian TLS 1.2
 * Languange: python3
 * Codestyle: PEP8
 * Separate branch for each team
+## Lectures
+https://www.overleaf.com/11271867qqtctbhwksqy
 ## Task
 I ЭТАП. Реализация криптографических примитивов и алгоритмов для TLS 1.2 с российскими криптонаборами
 
