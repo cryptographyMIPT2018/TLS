@@ -3,7 +3,7 @@ from collections import namedtuple
 
 Point = namedtuple('Point', ['x', 'y', 'z'])
 
-def MakePoint(x, y, z = 1):
+def MakePoint(x, y, z=1):
     return Point(x, y, z)
 
 
