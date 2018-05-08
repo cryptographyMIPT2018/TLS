@@ -3,8 +3,13 @@ from collections import namedtuple
 
 Point = namedtuple('Point', ['x', 'y', 'z'])
 
+
 def MakePoint(x, y, z=1):
     return Point(x, y, z)
+
+
+class NotOnTheCurve(Exception):
+    pass
 
 
 class EllipticCurve:
@@ -37,11 +42,47 @@ class EllipticCurve:
     def one(self):
         return MakePoint(self.x, self.y)
 
+    def is_zero(self, point):
+        if point.z != 0:
+            return False
+        else:
+            if (point.x == 0) and (point.y != 0):
+                return True
+            else:
+                raise NotOnTheCurve()
+
+    def check_point(self, point):
+        assert point.z == 0 or point.z == 1
+
+    def check_points(self, *points):
+        for point in points:
+            self.check_point(point)
+
     def summ(self, point_a, point_b):
-        pass
+        self.check_points(point_a, point_b)
+        if self.is_zero(point_a):
+            return point_b
+        if self.is_zero(point_b):
+            return point_a
+        if point_a != point_b:
+            assert (point_a.y - point_b.y) % (point_a.x - point_b.x) == 0
+            lam = (point_a.y - point_b.y) // (point_a.x - point_b.x)
+            x_ab = (lam ** 2 - point_a.x - point_b.x) % self.p
+            return Point(
+                x_ab,
+                (lam * (point_a.x - x_ab) - point_a.y) % self.p
+            )
+        else:
+            assert (3 * point_a.x * point_a.x + self.a) % (2 * point_a.y) == 0
+            lam = (3 * point_a.x * point_a.x + self.a) // (2 * point_a.y)
+            x_2a = (lam ** 2 - point_a.x) % self.p
+            return Point(
+                x_ab,
+                (lam * (point_a.x - x_2a) - point_a.y) % self.p
+            )
 
     def double(self, point):
-        pass
+        return self.summ(point, point)
 
     def multiply_by_number(self, point, number):
         result = self.p
