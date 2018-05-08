@@ -4,7 +4,7 @@ import unittest
 import re
 import pprint
 
-from elliptic_curve import Point, MakePoint, EllipticCurve
+from elliptic_curve import Point, EllipticCurve
 
 HEADER = ['p', 'a', 'b', 'm', 'q', 'x', 'y']
 
@@ -90,36 +90,57 @@ INTEGER
  28 04 10 55 F9 4C EE EC 7E 21 34 07 80 FE 41 BD
 """
 
+
 def hex_str_to_int(s):
     return int(re.sub(r"[^\w\d]", "", s), 16)
+
 
 def split_gost_integers(text):
     return list(filter(lambda s: len(s) > 0, map(str.strip, text.split("INTEGER"))))
 
+
 def parse_gost_integers(text):
     return list(map(hex_str_to_int, split_gost_integers(text)))
+
 
 def parse_curve_parameters(text):
     return dict(zip(HEADER, parse_gost_integers(text)))
 
 
+class TestPoint(unittest.TestCase):
+
+    def test_eq(self):
+        self.assertTrue(Point(2, 2, 1) == Point(4, 4, 2))
+        self.assertTrue(Point(9, 1, 1) == Point(36, 4, 4))
+        self.assertTrue(Point(3, 0, 1) == Point(-6, 0, -2))
+        self.assertTrue(Point(2, 2, 0) == Point(4, 4, 0))
+        self.assertTrue(Point(2, 0, 0) == Point(4, 0, 0))
+        self.assertTrue(Point(-1, 1, 1) == Point(1, -1, -1))
+
+        self.assertTrue(Point(0, 0, 0) != Point(4, 0, 0))
+        self.assertTrue(Point(-1, 2, 0) != Point(4, 0, 0))
+        self.assertTrue(Point(-1, 1, 0) != Point(1, -1, 0))
+        self.assertTrue(Point(4, 1, 1) != Point(1, -1, -1))
+        self.assertTrue(Point(-1, 4, 1) != Point(1, 7, 2))
+
+
 class TestEllipticCurve(unittest.TestCase):
 
     def test_compare_parameters_with_gost_text(self):
-        #~ pprint(parse_curve_parameters(SET_A_STR))
-        #~ pprint(parse_curve_parameters(SET_B_STR))
+        # ~ pprint(parse_curve_parameters(SET_A_STR))
+        # ~ pprint(parse_curve_parameters(SET_B_STR))
         self.assertEqual(parse_curve_parameters(SET_A_STR), EllipticCurve.PARAMETERS['A'])
         self.assertEqual(parse_curve_parameters(SET_B_STR), EllipticCurve.PARAMETERS['B'])
 
     def test_correctness_of_parameters(self):
         ec = EllipticCurve('A')
-        self.assertTrue(ec.is_on_curve(ec.one()))
+        self.assertTrue(ec.is_on_curve(ec.get_forming()))
         ec = EllipticCurve('B')
-        self.assertTrue(ec.is_on_curve(ec.one()))
+        self.assertTrue(ec.is_on_curve(ec.get_forming()))
 
     def test_multiply_by_number(self):
         ec = EllipticCurve('A')
-        a = ec.one()
+        a = ec.get_forming()
         for k in [-1233535, 1231, 0, -1, 1, 1231341]:
             self.assertTrue(ec.is_on_curve(ec.multiply_by_number(a, k)))
         mul = ec.multiply_by_number
@@ -127,13 +148,14 @@ class TestEllipticCurve(unittest.TestCase):
         self.assertEqual(mul(mul(a, 2), -3), mul(a, -6))
         self.assertEqual(mul(mul(a, -4), 7), mul(a, -28))
         self.assertEqual(mul(mul(a, 123), -122), mul(a, 1))
-        self.assertEqual(mul(a, 0), a)
+        self.assertEqual(mul(a, ec.get_zero()), a)
 
     def test_is_on_curve(self):
         pass
 
     def test_split(self):
         pass
+
 
 if __name__ == '__main__':
     unittest.main()

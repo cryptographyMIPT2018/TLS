@@ -1,11 +1,18 @@
-from collections import namedtuple
+class Point:
+    def __init__(self, x, y, z=1):
+        self.x = x
+        self.y = y
+        self.z = z
 
-
-Point = namedtuple('Point', ['x', 'y', 'z'])
-
-
-def MakePoint(x, y, z=1):
-    return Point(x, y, z)
+    def __eq__(self, point):
+        if self.z * point.z:
+            return self.x * point.z == point.x * self.z and self.y * point.z == point.y * self.z
+        else:
+            if not self.z == point.z:
+                return False
+            if (self.x == 0 and point.x != 0) or (self.y == 0 and point.y != 0):
+                return False
+            return self.x * point.y == self.y * point.x
 
 
 class NotOnTheCurve(Exception):
@@ -39,8 +46,11 @@ class EllipticCurve:
         assert(curve_id in self.PARAMETERS)
         self.__dict__.update(self.PARAMETERS[curve_id])
 
-    def one(self):
-        return MakePoint(self.x, self.y)
+    def get_forming(self):
+        return Point(self.x, self.y)
+
+    def get_zero(self):
+        return Point(0, 1, 0)
 
     def is_zero(self, point):
         if point.z != 0:
@@ -85,8 +95,8 @@ class EllipticCurve:
         return self.summ(point, point)
 
     def multiply_by_number(self, point, number):
-        result = self.p
-        point_power = self.point
+        result = self.get_zero()
+        point_power = point
         number = number % self.m
 
         while True:
