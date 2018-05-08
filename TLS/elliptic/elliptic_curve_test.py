@@ -150,6 +150,14 @@ class TestEllipticCurve(unittest.TestCase):
         self.assertEqual(mul(mul(a, 123), -122), mul(a, 1))
         self.assertEqual(mul(a, ec.get_zero()), a)
 
+    def test_summ(self):
+        ec = EllipticCurve("test")
+        point_a = Point(17, 10)
+        point_b = Point(95, 31)
+        ref = Point(1, 54)
+        result = ec.summ(point_a, point_b)
+        self.assertEqual(result, ref)
+
     def test_is_on_curve(self):
         pass
 
