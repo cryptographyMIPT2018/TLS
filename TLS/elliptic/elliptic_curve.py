@@ -4,6 +4,17 @@ class Point:
         self.y = y
         self.z = z
 
+    def __eq__(self, point):
+        if self.z * point.z:
+            return self.x * point.z == point.x * self.z and self.y * point.z == point.y * self.z
+        else:
+            if not self.z == point.z:
+                return False
+            if (self.x == 0 and point.x != 0) or (self.y == 0 and point.y != 0):
+                return False
+            return self.x * point.y == self.y * point.x
+
+
 
 class EllipticCurve:
 

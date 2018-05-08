@@ -107,6 +107,23 @@ def parse_curve_parameters(text):
     return dict(zip(HEADER, parse_gost_integers(text)))
 
 
+class TestPoint(unittest.TestCase):
+
+    def test_eq(self):
+        self.assertTrue(Point(2, 2, 1) == Point(4, 4, 2))
+        self.assertTrue(Point(9, 1, 1) == Point(36, 4, 4))
+        self.assertTrue(Point(3, 0, 1) == Point(-6, 0, -2))
+        self.assertTrue(Point(2, 2, 0) == Point(4, 4, 0))
+        self.assertTrue(Point(2, 0, 0) == Point(4, 0, 0))
+        self.assertTrue(Point(-1, 1, 1) == Point(1, -1, -1))
+
+        self.assertTrue(Point(0, 0, 0) != Point(4, 0, 0))
+        self.assertTrue(Point(-1, 2, 0) != Point(4, 0, 0))
+        self.assertTrue(Point(-1, 1, 0) != Point(1, -1, 0))
+        self.assertTrue(Point(4, 1, 1) != Point(1, -1, -1))
+        self.assertTrue(Point(-1, 4, 1) != Point(1, 7, 2))
+
+
 class TestEllipticCurve(unittest.TestCase):
 
     def test_compare_parameters_with_gost_text(self):
