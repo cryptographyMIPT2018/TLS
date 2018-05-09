@@ -39,21 +39,22 @@ class EllipticCurve:
             'q': 6703903964971298549787012499102923063739682910296196688861780721860882015036922585419853748190383615062910947743405567510148398820717100282856877776119229,
             'x': 2,
             'y': 1391087797795557258711735874750463328666729297647553860794340434982072762491277963324668489993185089365703033494204180568181905548968011075910357787492797
-        },
-        "test": {
-            'a': 2,
-            'b': 3,
-            'm': 97,
-            'p': 97,
-            'q': 97,
-            'x': 17,
-            'y': 10
         }
     }
 
-    def __init__(self, curve_id):
-        assert(curve_id in self.PARAMETERS)
-        self.__dict__.update(self.PARAMETERS[curve_id])
+    def __init__(self, curve_id=None, curve=None):
+        if curve_id is not None and curve is not None:
+            raise ValueError('curve_id and curve must not be set simultaneously')
+
+        if curve_id is not None:
+            assert(curve_id in self.PARAMETERS)
+            self.__dict__.update(self.PARAMETERS[curve_id])
+        elif curve is not None:
+            assert(set(curve.keys()) == set(self.PARAMETERS['A']))
+            self.__dict__.update(curve)
+        else:
+            raise ValueError('curve_id or curve must be set')
+
 
     def get_forming(self):
         return Point(self.x, self.y)
