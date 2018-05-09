@@ -1,3 +1,20 @@
+def gcd(a, b):
+    if a == 0:
+        x = 0
+        y = 1
+        return b, x, y
+    g, tmp_x, tmp_y = gcd(b % a, a)
+    x = tmp_y - (b / a) * tmp_x
+    y = tmp_x
+    return g, x, y
+
+
+def get_inverced(a, p):
+    g, x, y = gcd(a, p)
+    assert g == 1
+    return (x % p + p) % p
+
+
 class Point:
     def __init__(self, x, y, z=1):
         self.x = x
@@ -10,7 +27,7 @@ class Point:
         else:
             if not self.z == point.z:
                 return False
-            if (self.x == 0 and point.x != 0) or (self.y == 0 and point.y != 0):
+            if ((self.x == 0) and (point.x != 0)) or ((self.y == 0) and (point.y != 0)):
                 return False
             return self.x * point.y == self.y * point.x
 
@@ -55,7 +72,6 @@ class EllipticCurve:
         else:
             raise ValueError('curve_id or curve must be set')
 
-
     def get_forming(self):
         return Point(self.x, self.y)
 
@@ -85,16 +101,16 @@ class EllipticCurve:
         if self.is_zero(point_b):
             return point_a
         if point_a != point_b:
-            assert (point_a.y - point_b.y) % (point_a.x - point_b.x) == 0
-            lam = (point_a.y - point_b.y) // (point_a.x - point_b.x)
+            inverced = get_inverced(point_a.x - point_b.x, self.p)
+            lam = ((point_a.y - point_b.y) * inverced) % self.p
             x_ab = (lam ** 2 - point_a.x - point_b.x) % self.p
             return Point(
                 x_ab,
                 (lam * (point_a.x - x_ab) - point_a.y) % self.p
             )
         else:
-            assert (3 * point_a.x * point_a.x + self.a) % (2 * point_a.y) == 0
-            lam = (3 * point_a.x * point_a.x + self.a) // (2 * point_a.y)
+            inverced = get_inverced(2 * point_a.y, self.p)
+            lam = ((3 * point_a.x * point_a.x + self.a) * self.inverced) % self.p
             x_2a = (lam ** 2 - point_a.x) % self.p
             return Point(
                 x_ab,
