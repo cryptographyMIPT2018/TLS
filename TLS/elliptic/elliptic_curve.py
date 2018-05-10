@@ -9,7 +9,7 @@ def gcd(a, b):
     return g, x, y
 
 
-def get_inverced(a, p):
+def get_inversed(a, p):
     g, x, y = gcd(a, p)
     assert g == 1 or g == -1
     return (x % p + p) % p
@@ -30,6 +30,13 @@ class Point:
             if ((self.x == 0) and (point.x != 0)) or ((self.y == 0) and (point.y != 0)):
                 return False
             return self.x * point.y == self.y * point.x
+
+    def __str__(self):
+        if self.z == 1:
+            cords = str((self.x, self.y))
+        else:
+            cords = str((self.x, self.y, self.z))
+        return 'Point: ' + cords
 
 
 class NotOnTheCurve(Exception):
@@ -110,17 +117,17 @@ class EllipticCurve:
         if self.is_zero(point_b):
             return point_a
         if point_a != point_b:
-            inverced = get_inverced(point_a.x - point_b.x, self.p)
-            lam = ((point_a.y - point_b.y) * inverced) % self.p
+            inversed = get_inversed(point_a.x - point_b.x, self.p)
+            lam = ((point_a.y - point_b.y) * inversed) % self.p
             x_ab = (lam ** 2 - point_a.x - point_b.x) % self.p
             return Point(
                 x_ab,
-                (lam * (point_a.x - x_ab) - point_a.y) % self.p
+                (lam * point_a.x - x_ab - point_a.y) % self.p
             )
         else:
-            inverced = get_inverced(2 * point_a.y, self.p)
-            lam = ((3 * point_a.x * point_a.x + self.a) * inverced) % self.p
-            x_2a = (lam ** 2 - point_a.x) % self.p
+            inversed = get_inversed(2 * point_a.y, self.p)
+            lam = ((3 * point_a.x * point_a.x + self.a) * inversed) % self.p
+            x_2a = (lam ** 2 - 2 * point_a.y) % self.p
             return Point(
                 x_2a,
                 (lam * (point_a.x - x_2a) - point_a.y) % self.p
