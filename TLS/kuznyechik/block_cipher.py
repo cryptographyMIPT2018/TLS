@@ -1,4 +1,5 @@
 import typing
+from kuznyechik import CKuznyechik
 
 class BlockCipher:
     def __init__(self, block_size, key_size):
@@ -33,20 +34,21 @@ class StupidBlockCipher(BlockCipher):
     
     def decrypt(self, cipher_text: bytes) -> bytes:
         return self.encrypt(cipher_text)
-    
+
 class Kuznyechik(BlockCipher):
-    """
-    Implement me
-    """
     def __init__(self):
         BlockCipher.__init__(self, 16, 32)
+        self.kuznyechik = CKuznyechik()
         
+    def set_key(self, key: bytes):
+        assert(len(key) == self.key_size)
+        self.kuznyechik.set_key(key)
+    
     def encrypt(self, plain_text: bytes) -> bytes:
         assert(len(plain_text) == self.block_size)
-        
-        return plain_text
+        return self.kuznyechik.encrypt(plain_text)
     
     def decrypt(self, cipher_text: bytes) -> bytes:
         assert(len(cipher_text) == self.block_size)
-        
-        return cipher_text
+        return self.kuznyechik.decrypt(cipher_text)
+
