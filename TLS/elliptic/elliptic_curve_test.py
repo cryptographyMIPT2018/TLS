@@ -116,10 +116,10 @@ class TestPoint(unittest.TestCase):
         self.assertTrue(Point(2, 2, 0) == Point(4, 4, 0))
         self.assertTrue(Point(2, 0, 0) == Point(4, 0, 0))
         self.assertTrue(Point(-1, 1, 1) == Point(1, -1, -1))
+        self.assertTrue(Point(-1, 1, 0) == Point(1, -1, 0))
 
         self.assertTrue(Point(0, 0, 0) != Point(4, 0, 0))
         self.assertTrue(Point(-1, 2, 0) != Point(4, 0, 0))
-        self.assertTrue(Point(-1, 1, 0) != Point(1, -1, 0))
         self.assertTrue(Point(4, 1, 1) != Point(1, -1, -1))
         self.assertTrue(Point(-1, 4, 1) != Point(1, 7, 2))
 
