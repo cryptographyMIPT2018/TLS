@@ -4,7 +4,7 @@ import unittest
 import re
 import pprint
 
-from elliptic_curve import Point, EllipticCurve
+from elliptic_curve import Point, EllipticCurve, gcd, get_inversed
 
 HEADER = ['p', 'a', 'b', 'm', 'q', 'x', 'y']
 
@@ -124,6 +124,25 @@ class TestPoint(unittest.TestCase):
         self.assertTrue(Point(-1, 4, 1) != Point(1, 7, 2))
 
 
+class TestGcd(unittest.TestCase):
+
+    def test_gcd(self):
+        a_s = [7, 14, 13, 11, 29 * 3 * 7, 19 * 3 * 16 * 5 * 7 * 11]
+        b_s = [21, 21, 17, 121, 29 * 3 * 8, 19 * 4 * 7 * 9 * 13 * 5 * 11]
+        rights = [7, 7, 1, 11, 29 * 3, 19 * 3 * 4 * 5 * 7 * 11]
+
+        for a, b, right in zip(a_s, b_s, rights):
+            self.assertEqual(gcd(a, b)[0], right)
+
+    def test_inverse(self):
+        a_s = [3, 3, 8, 78]
+        p_s = [5, 13, 97]
+        rights = [2, 9, 51]
+
+        for a, p, right in zip(a_s, p_s, rights):
+            self.assertEqual(get_inversed(a, p), right)
+
+
 class TestEllipticCurve(unittest.TestCase):
 
     def test_compare_parameters_with_gost_text(self):
@@ -156,11 +175,18 @@ class TestEllipticCurve(unittest.TestCase):
         point_b = Point(95, 31)
         ref = Point(1, 54)
         result = ec.summ(point_a, point_b)
+        print(result)
+        print(ref)
+        self.assertTrue(result == ref)
 
-        def point_eq(point1, point2):
-            return (point1.x, point1.y, point1.z) == (point2.x, point2.y, point2.z)
-
-        self.assertTrue(point_eq(result, ref))
+    def test_double(self):
+        ec = EllipticCurve("test")
+        point = Point(3, 6)
+        ref = Point(80, 10)
+        result = ec.double(point)
+        print(result)
+        print(ref)
+        self.assertTrue(result == ref)
 
     def test_is_on_curve(self):
         pass
