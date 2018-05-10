@@ -135,7 +135,7 @@ class TestGcd(unittest.TestCase):
             self.assertEqual(gcd(a, b)[0], right)
 
     def test_inverse(self):
-        a_s = [3, 3, 8, 78]
+        a_s = [3, 3, 78]
         p_s = [5, 13, 97]
         rights = [2, 9, 51]
 
@@ -166,8 +166,7 @@ class TestEllipticCurve(unittest.TestCase):
         self.assertEqual(mul(mul(a, 10), 10), mul(a, 100))
         self.assertEqual(mul(mul(a, 2), -3), mul(a, -6))
         self.assertEqual(mul(mul(a, -4), 7), mul(a, -28))
-        self.assertEqual(mul(mul(a, 123), -122), mul(a, 1))
-        self.assertEqual(mul(a, ec.get_zero()), a)
+        self.assertEqual(ec.summ(mul(a, 123), mul(a, -122)), mul(a, 1))
 
     def test_summ(self):
         ec = EllipticCurve("test")
@@ -178,6 +177,10 @@ class TestEllipticCurve(unittest.TestCase):
         print(result)
         print(ref)
         self.assertTrue(result == ref)
+
+        ec = EllipticCurve('A')
+        a = ec.get_forming()
+        self.assertEqual(ec.summ(a, ec.get_zero()), a)
 
     def test_double(self):
         ec = EllipticCurve("test")

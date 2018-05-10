@@ -110,28 +110,26 @@ class EllipticCurve:
         for point in points:
             self.check_point(point)
 
-    def summ(self, point_a, point_b):
-        self.check_points(point_a, point_b)
-        if self.is_zero(point_a):
-            return point_b
-        if self.is_zero(point_b):
-            return point_a
-        if point_a != point_b:
-            inversed = get_inversed(point_a.x - point_b.x, self.p)
-            lam = ((point_a.y - point_b.y) * inversed) % self.p
-            x_ab = (lam ** 2 - point_a.x - point_b.x) % self.p
-            return Point(
-                x_ab,
-                (lam * point_a.x - x_ab - point_a.y) % self.p
-            )
+    def _mod_p(self, a):
+        return (a % self.p + self.p) % self.p
+
+    def summ(self, point_p, point_q):
+        self.check_points(point_p, point_q)
+        if self.is_zero(point_p):
+            return point_q
+        if self.is_zero(point_q):
+            return point_p
+        if point_p != point_q:
+            inversed = get_inversed(self._mod_p(point_p.x - point_q.x), self.p)
+            lam = self._mod_p((point_p.y - point_q.y) * inversed)
         else:
-            inversed = get_inversed(2 * point_a.y, self.p)
-            lam = ((3 * point_a.x * point_a.x + self.a) * inversed) % self.p
-            x_2a = (lam ** 2 - 2 * point_a.y) % self.p
-            return Point(
-                x_2a,
-                (lam * (point_a.x - x_2a) - point_a.y) % self.p
-            )
+            inversed = get_inversed(self._mod_p(2 * point_p.y), self.p)
+            lam = self._mod_p((3 * point_p.x ** 2 + self.a) * inversed)
+        x_ab = self._mod_p(lam ** 2 - point_p.x - point_q.x)
+        return Point(
+            x_ab,
+            self._mod_p(lam * (point_q.x - x_ab) - point_q.y)
+        )
 
     def double(self, point):
         return self.summ(point, point)
