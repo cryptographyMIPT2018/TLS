@@ -168,15 +168,27 @@ class TestEllipticCurve(unittest.TestCase):
         self.assertEqual(mul(mul(a, -4), 7), mul(a, -28))
         self.assertEqual(ec.summ(mul(a, 123), mul(a, -122)), mul(a, 1))
 
+        ec = EllipticCurve('test')
+        point = Point(3, 6)
+        n_s = range(7)
+        rights = [Point(0, 1, 0), Point(3, 6), Point(80, 10), Point(80, 87), Point(3, 91), Point(0, 1, 0), Point(3, 6)]
+        for n, right in zip(n_s, rights):
+            print(right)
+            print(ec.multiply_by_number(point, n))
+            self.assertEqual(ec.multiply_by_number(point, n), right)
+
     def test_summ(self):
         ec = EllipticCurve("test")
         point_a = Point(17, 10)
         point_b = Point(95, 31)
         ref = Point(1, 54)
         result = ec.summ(point_a, point_b)
-        print(result)
-        print(ref)
         self.assertTrue(result == ref)
+
+        point_a = Point(80, 10)
+        point_b = Point(80, 87)
+        ref = Point(0, 1, 0)
+        self.assertEqual(ec.summ(point_a, point_b), ref)
 
         ec = EllipticCurve('A')
         a = ec.get_forming()

@@ -11,7 +11,6 @@ def gcd(a, b):
 
 def get_inversed(a, p):
     g, x, y = gcd(a, p)
-    assert g == 1 or g == -1
     return (x % p + p) % p
 
 
