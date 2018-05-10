@@ -4,14 +4,14 @@ def gcd(a, b):
         y = 1
         return b, x, y
     g, tmp_x, tmp_y = gcd(b % a, a)
-    x = tmp_y - (b / a) * tmp_x
+    x = tmp_y - int(b / a) * tmp_x
     y = tmp_x
     return g, x, y
 
 
 def get_inverced(a, p):
     g, x, y = gcd(a, p)
-    assert g == 1
+    assert g == 1 or g == -1
     return (x % p + p) % p
 
 
@@ -110,10 +110,10 @@ class EllipticCurve:
             )
         else:
             inverced = get_inverced(2 * point_a.y, self.p)
-            lam = ((3 * point_a.x * point_a.x + self.a) * self.inverced) % self.p
+            lam = ((3 * point_a.x * point_a.x + self.a) * inverced) % self.p
             x_2a = (lam ** 2 - point_a.x) % self.p
             return Point(
-                x_ab,
+                x_2a,
                 (lam * (point_a.x - x_2a) - point_a.y) % self.p
             )
 
