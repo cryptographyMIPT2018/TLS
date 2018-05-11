@@ -6,14 +6,17 @@ class BlockCipherMode:
         self.cipher = block_cipher
         
     def encrypt(self, plain_text: bytes, key: bytes, **kwargs) -> bytes:
-        pass
+        return plain_text
     
     def decrypt(self, cipher_text: bytes, key: bytes, **kwargs) -> bytes:
-        pass
+        return cipher_text
     
     
 class CTR_ACPKM(BlockCipherMode):
     def __init__(self, block_cipher: BlockCipher, section_size: int, gamma_block_size: int):
+        """
+        section_size, gamma_block_size - parameters in bytes
+        """
         assert(block_cipher.key_size == 32)
         assert(block_cipher.block_size % 2 == 0)
         assert(block_cipher.key_size % block_cipher.block_size == 0)
@@ -24,22 +27,22 @@ class CTR_ACPKM(BlockCipherMode):
         self.section_size = section_size
         self.gamma_block_size = gamma_block_size
         
-    def _acpkm(self):
+    def _acpkm(self) -> bytes:
         key = list(range(128, 128 + 32))
         offset = 0
         while offset < len(key):
             next_offset = offset + self.cipher.block_size
-            key[offset : next_offset] = self.cipher.encrypt(key[offset : next_offset])
+            key[offset : next_offset] = self.cipher.encrypt(bytes(key[offset : next_offset]))
             offset = next_offset
         self.cipher.set_key(bytes(key))
     
     def _inc(self, vector: bytes) -> bytes:
         vector = list(vector)
         for i in range(len(vector)):
-            if vector[i] == 255:
-                vector[i] == 0
+            if vector[-i - 1] == 255:
+                vector[-i - 1] = 0
             else:
-                vector[i] += 1
+                vector[-i - 1] += 1
                 break
         return bytes(vector)
     
@@ -56,7 +59,7 @@ class CTR_ACPKM(BlockCipherMode):
         offset = 0
         section_count = (len(plain_text) + self.section_size - 1) // self.section_size
         gamma_block_count = self.section_size // self.gamma_block_size
-        ctr = bytes([0 for _ in initialization_vector]) + initialization_vector
+        ctr = initialization_vector + bytes([0 for _ in initialization_vector])
         self.cipher.set_key(key)
         for i in range(section_count):
             for j in range(gamma_block_count):

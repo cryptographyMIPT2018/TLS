@@ -1,6 +1,7 @@
 import typing
 from kuznyechik import CKuznyechik
 
+
 class BlockCipher:
     def __init__(self, block_size, key_size):
         """
@@ -19,7 +20,8 @@ class BlockCipher:
     
     def decrypt(self, cipher_text: bytes) -> bytes:
         return cipher_text
-    
+
+
 class StupidBlockCipher(BlockCipher):
     def __init__(self):
         BlockCipher.__init__(self, 16, 32)
@@ -34,6 +36,7 @@ class StupidBlockCipher(BlockCipher):
     
     def decrypt(self, cipher_text: bytes) -> bytes:
         return self.encrypt(cipher_text)
+
 
 class Kuznyechik(BlockCipher):
     def __init__(self):
