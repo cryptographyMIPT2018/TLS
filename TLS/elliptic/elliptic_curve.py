@@ -119,11 +119,15 @@ class EllipticCurve:
         if self.is_zero(point_q):
             return point_p
         if point_p != point_q:
+            if point_p.x == point_q.x:
+                return self.get_zero()
+
             inversed = get_inversed(self._mod_p(point_p.x - point_q.x), self.p)
             lam = self._mod_p((point_p.y - point_q.y) * inversed)
         else:
             inversed = get_inversed(self._mod_p(2 * point_p.y), self.p)
             lam = self._mod_p((3 * point_p.x ** 2 + self.a) * inversed)
+
         x_ab = self._mod_p(lam ** 2 - point_p.x - point_q.x)
         return Point(
             x_ab,
