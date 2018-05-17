@@ -4,6 +4,7 @@ import unittest
 import pprint
 import random
 import sys
+import ctypes
 
 # dirty hack, because I don't understand how to properly make packages
 sys.path.append("../elliptic")
@@ -24,7 +25,7 @@ TEST_CURVE_PARAMETERS = {
 class TestSigner(unittest.TestCase):
 
     def test_acceptance(self):
-        h = lambda m: hash(m).to_bytes(256, byteorder='little')
+        h = lambda m: ctypes.c_ulong(hash(m)).value.to_bytes(64, byteorder='little')
         signer = Signer(EllipticCurve(curve=TEST_CURVE_PARAMETERS), h, 12345)
         text = "Hello, world!"
         signature = signer.sign(text)
