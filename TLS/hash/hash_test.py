@@ -19,6 +19,7 @@ class HashTest1(unittest.TestCase):
             "323130393837363534333231303938373635343332313039383736353433323130393837363534333231303938373635343332313039383736353433323130")
         answer = bytes.fromhex(
             "00557be5e584fd52a449b16b0251d05d27f94ab76cbaa6da890b59d8ef1e159d")
+        self.assertEqual(int.from_bytes(hash256_bit_length(message, 504), byteorder="big"), int.from_bytes(answer, byteorder="big"))
         self.assertEqual(hash256_bit_length(message, 504), answer)
         self.assertEqual(hash256(message), answer)
 
