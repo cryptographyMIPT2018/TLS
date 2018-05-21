@@ -1,6 +1,7 @@
 import random
 
-from elliptic_curve import Point, EllipticCurve
+from TLS.elliptic.elliptic_curve import Point, EllipticCurve
+from TLS.hash.hash import hash256
 
 TEST_CURVE_PARAMETERS = {
     'a': 7,
@@ -14,7 +15,7 @@ TEST_CURVE_PARAMETERS = {
 
 class Signer:
 
-    def __init__(self, curve, hash_f, d=None, Q=None):
+    def __init__(self, curve, hash_f=hash256, d=None, Q=None):
         self.curve = curve
         self.hash_f = hash_f
         self.d = d
@@ -33,7 +34,7 @@ class Signer:
         p = self.curve.p
         return (c.x * pow(c.z, p - 2, p)) % p
 
-    def sign(self, m):
+    def sign(self, m, force_e=None, force_k=None, inner_params_out=None):
         # Notice, that indexing in python bytes is from left to right
         # but in standart it is from right to left
         # Here indexes are correct, while left-right relations are not
@@ -41,17 +42,19 @@ class Signer:
         assert(self.curve is not None)
         assert(self.d is not None)
 
-        # step 1
-        h = self.hash_f(m)
-
-        # step 2
-        e = self.e_from_h(h)
+        if force_e is None:
+            # step 1
+            h = self.hash_f(m)
+            # step 2
+            e = self.e_from_h(h)
+        else:
+            e = force_e
 
         q = self.curve.q
         while True:
             while True:
                 # step 3
-                k = random.randint(1, q - 1)
+                k = random.randint(1, q - 1) if force_k is None else force_k
 
                 # step 4
                 P = self.curve.get_forming()
@@ -72,6 +75,9 @@ class Signer:
         rv = r.to_bytes(32, byteorder='little')
 
         signature = sv + rv
+
+        if inner_params_out is not None:
+            inner_params_out.update(locals())
 
         return signature
 
