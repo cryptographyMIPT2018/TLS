@@ -43,8 +43,8 @@ class Point:
     @staticmethod
     def from_bytes(byte_data):
         assert(len(byte_data) == 128)
-        x = int.from_bytes(byte_data[:64], 'big')
-        y = int.from_bytes(byte_data[64:], 'big')
+        x = int.from_bytes(byte_data[:64], 'little')
+        y = int.from_bytes(byte_data[64:], 'little')
         return Point(x,y)
 
 
