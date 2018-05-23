@@ -35,7 +35,7 @@ def generate_key_pair(user_id, secret_key):
     public_key = (public_key.x, public_key.y)
 
     with open(path_to_private_key_file, 'w') as private_key_file:
-        private_key_file.write('secret_key = {}\n'.format(secret_key))
+        private_key_file.write('private_key = {}\n'.format(secret_key))
 
     with open(path_to_public_key_file, 'w') as public_key_file:
         public_keys[str(user_id)] = public_key
