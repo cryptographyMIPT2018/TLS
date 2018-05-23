@@ -1,6 +1,8 @@
 import unittest
 from message_structures import SERVER_HELLO_MESSAGE, CLIENT_HELLO_MESSAGE
 from message_structures import CERTIFICATE_MESSAGE, CLIENT_KEY_EXCHANGE_MESSAGE
+from message_structures import CERTIFICATE_REQUEST_MESSAGE, SERVER_HELLO_DONE_MESSAGE
+from message_structures import FINISHED_MESSAGE
 
 
 class TestServerHello(unittest.TestCase):
@@ -41,8 +43,8 @@ class TestClientHello(unittest.TestCase):
                 'extension_type': bytes.fromhex('000D'),
                 'extension_data': {
                     'supported_signature_algorithms': [
-                        {'SignatureAlgorithm': {'hash': b'\xee', 'signature': b'\xee'}},
-                        {'SignatureAlgorithm': {'hash': b'\xef', 'signature': b'\xef'}}
+                        {'SignatureAndHashAlgorithm': {'hash': b'\xee', 'signature': b'\xee'}},
+                        {'SignatureAndHashAlgorithm': {'hash': b'\xef', 'signature': b'\xef'}}
                     ],
                 }
             }},
@@ -88,6 +90,52 @@ class TestCertificate(unittest.TestCase):
 
     def test_parse_bytes(self):
         result = CERTIFICATE_MESSAGE.parse_bytes(self.bytes_str)
+        self.assertDictEqual(result, self.data)
+
+
+class TestCertificateRequest(unittest.TestCase):
+    bytes_str = bytes.fromhex("0D 00 00 0B 02 EE EF 00 04 EE EE EF EF 00 00")
+    data = {
+        'certificate_types': [{'ClientCertificateType': b'\xEE'}, {'ClientCertificateType': b'\xEF'}],
+        'supported_signature_algorithms': [
+            {'SignatureAndHashAlgorithm': {'hash': b'\xee', 'signature': b'\xee'}},
+            {'SignatureAndHashAlgorithm': {'hash': b'\xef', 'signature': b'\xef'}}
+        ],
+        'certificate_authorities': b''
+    }
+
+    def test_to_bytes(self):
+        result = CERTIFICATE_REQUEST_MESSAGE.to_bytes(self.data)
+        self.assertTrue(self.bytes_str == result)
+
+    def test_parse_bytes(self):
+        result = CERTIFICATE_REQUEST_MESSAGE.parse_bytes(self.bytes_str)
+        self.assertDictEqual(result, self.data)
+
+
+class TestServerHelloDone(unittest.TestCase):
+    bytes_str = bytes.fromhex("0E 00 00 00")
+    data = b''
+
+    def test_to_bytes(self):
+        result = SERVER_HELLO_DONE_MESSAGE.to_bytes(self.data)
+        self.assertTrue(self.bytes_str == result)
+
+    def test_parse_bytes(self):
+        result = SERVER_HELLO_DONE_MESSAGE.parse_bytes(self.bytes_str)
+        self.assertEqual(result, self.data)
+
+
+class TestFinished(unittest.TestCase):
+    bytes_str = bytes.fromhex('14 00 00 20 20 45 BB 78 3A A5 81 13 2F 90 95 2E 98 90 D8 6E F1 51 41 C8 17 DD C1 67 E9 97 2D 99 52 B3 00 5B')
+    data = {'verify_data': bytes.fromhex('2045BB783AA581132F90952E9890D86EF15141C817DDC167E9972D9952B3005B')}
+
+    def test_to_bytes(self):
+        result = FINISHED_MESSAGE.to_bytes(self.data)
+        self.assertTrue(self.bytes_str == result)
+
+    def test_parse_bytes(self):
+        result = FINISHED_MESSAGE.parse_bytes(self.bytes_str)
         self.assertDictEqual(result, self.data)
 
 

@@ -27,6 +27,11 @@ cipher_suite = FixedLenStructure('cipher_suite', 2)
 cipher_suites = ListStructure('cipher_suites', 2, FixedLenStructure('CipherSuite', 2), 2)
 compression_method_structure = FixedLenStructure('compression_method', 1)
 compression_methods_structure = ListStructure('compression_methods', 1, FixedLenStructure('CompressionMethod', 1), 1)
+supported_signature_algorithms_structure = ListStructure(
+    'supported_signature_algorithms', 2,
+    NoLengthStructure([FixedLenStructure('hash', 1), FixedLenStructure('signature', 1)], 'SignatureAndHashAlgorithm'),
+    2,
+)
 renegotiated_connection_extension_structure = NoLengthStructure(
     [
         FixedLenStructure('extension_type', 2),
@@ -37,11 +42,7 @@ renegotiated_connection_extension_structure = NoLengthStructure(
 signature_algorithms_extension_structure = NoLengthStructure(
     [
         FixedLenStructure('extension_type', 2),
-        VariableLenStructure('extension_data', 2, [ListStructure(
-            'supported_signature_algorithms', 2,
-            NoLengthStructure([FixedLenStructure('hash', 1), FixedLenStructure('signature', 1)], 'SignatureAlgorithm'),
-            2,
-        )])
+        VariableLenStructure('extension_data', 2, [supported_signature_algorithms_structure])
     ],
     'Extention',
 )
@@ -76,7 +77,16 @@ certificate_children = [
     ListStructure('certificate_list', 3, VariableLenStructure('ASN.1Cert', 3), 1)
 ]
 
+certificate_request_children = [
+    ListStructure('certificate_types', 1, FixedLenStructure('ClientCertificateType', 1), 2),
+    supported_signature_algorithms_structure,
+    VariableLenStructure('certificate_authorities', 2)
+]
+
 SERVER_HELLO_MESSAGE = HandshakeMessageStructure(b'\x02', server_hello_children)
 CLIENT_HELLO_MESSAGE = HandshakeMessageStructure(b'\x01', client_hello_children)
 CLIENT_KEY_EXCHANGE_MESSAGE = HandshakeMessageStructure(b'\x10', [FixedLenStructure('exchange_keys', 149)])
 CERTIFICATE_MESSAGE = HandshakeMessageStructure(b'\x0b', certificate_children)
+CERTIFICATE_REQUEST_MESSAGE = HandshakeMessageStructure(b'\x0d', certificate_request_children)
+SERVER_HELLO_DONE_MESSAGE = HandshakeMessageStructure(b'\x0e', [])
+FINISHED_MESSAGE = HandshakeMessageStructure(b'\x14', [FixedLenStructure('verify_data', 32)])
