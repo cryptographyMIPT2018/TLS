@@ -2,7 +2,7 @@ import unittest
 from message_structures import SERVER_HELLO_MESSAGE, CLIENT_HELLO_MESSAGE
 from message_structures import CERTIFICATE_MESSAGE, CLIENT_KEY_EXCHANGE_MESSAGE
 from message_structures import CERTIFICATE_REQUEST_MESSAGE, SERVER_HELLO_DONE_MESSAGE
-from message_structures import FINISHED_MESSAGE
+from message_structures import CERTIFICATE_VERIFY_MESSAGE, FINISHED_MESSAGE
 
 
 class TestServerHello(unittest.TestCase):
@@ -136,6 +136,21 @@ class TestFinished(unittest.TestCase):
 
     def test_parse_bytes(self):
         result = FINISHED_MESSAGE.parse_bytes(self.bytes_str)
+
+
+class TestCertificateVerify(unittest.TestCase):
+    bytes_str = bytes.fromhex("0F 00 00 44 EE EE 00 40 02 F6 8F 7C 79 D9 57 B2 24 76 2E 48 17 27 B3 00 EC 88 82 01 AF 8F 9A A8 5B C5 5B 45 62 43 1F F7 38 A8 13 57 8A B8 02 CE D7 B1 D3 FA D1 39 A2 33 DB 43 33 69 4C 4C 7F E1 B3 97 BB 45 BB 5B DE 94")
+    data = {
+        'algorithm': {'hash': b'\xee', 'signature': b'\xee'},
+        'signature': bytes.fromhex("02F68F7C79D957B224762E481727B300EC888201AF8F9AA85BC55B4562431FF738A813578AB802CED7B1D3FAD139A233DB4333694C4C7FE1B397BB45BB5BDE94")
+    }
+
+    def test_to_bytes(self):
+        result = CERTIFICATE_VERIFY_MESSAGE.to_bytes(self.data)
+        self.assertTrue(self.bytes_str == result)
+
+    def test_parse_bytes(self):
+        result = CERTIFICATE_VERIFY_MESSAGE.parse_bytes(self.bytes_str)
         self.assertDictEqual(result, self.data)
 
 

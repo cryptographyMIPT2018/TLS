@@ -39,8 +39,8 @@ renegotiated_connection_extension_structure = NoLengthStructure(
     ],
     'Extention',
 )
-signature_algorithms_extension_structure = NoLengthStructure(
-    [
+signature_and_hash_algorithm = NoLengthStructure([FixedLenStructure('hash', 1), FixedLenStructure('signature', 1)], 'SignatureAndHashAlgorithm')
+signature_algorithms_extension_structure = NoLengthStructure([
         FixedLenStructure('extension_type', 2),
         VariableLenStructure('extension_data', 2, [supported_signature_algorithms_structure])
     ],
@@ -82,6 +82,10 @@ certificate_request_children = [
     supported_signature_algorithms_structure,
     VariableLenStructure('certificate_authorities', 2)
 ]
+certificate_verify_children = [
+    NoLengthStructure([FixedLenStructure('hash', 1), FixedLenStructure('signature', 1)], 'algorithm'),
+    VariableLenStructure('signature', 2)
+]
 
 SERVER_HELLO_MESSAGE = HandshakeMessageStructure(b'\x02', server_hello_children)
 CLIENT_HELLO_MESSAGE = HandshakeMessageStructure(b'\x01', client_hello_children)
@@ -90,3 +94,5 @@ CERTIFICATE_MESSAGE = HandshakeMessageStructure(b'\x0b', certificate_children)
 CERTIFICATE_REQUEST_MESSAGE = HandshakeMessageStructure(b'\x0d', certificate_request_children)
 SERVER_HELLO_DONE_MESSAGE = HandshakeMessageStructure(b'\x0e', [])
 FINISHED_MESSAGE = HandshakeMessageStructure(b'\x14', [FixedLenStructure('verify_data', 32)])
+CERTIFICATE_VERIFY_MESSAGE = HandshakeMessageStructure(b'\x0f', certificate_verify_children)
+CHANGE_CIPHER_SPEC = b'\x01'
