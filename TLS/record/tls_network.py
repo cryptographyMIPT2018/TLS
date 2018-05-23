@@ -12,9 +12,9 @@ APP_DATA_TYPE = 'ApplicationData'
 KEY_MAC_TYPE = 'key_mac'
 KEY_ENC_TYPE = 'key_enc'
 IV_TYPE = 'iv'
-SEED_TYPE = 'seed'
+# SEED_TYPE = 'seed'
 
-KEY_TYPES = [KEY_MAC_TYPE, KEY_ENC_TYPE, IV_TYPE, SEED_TYPE]
+KEY_TYPES = [KEY_MAC_TYPE, KEY_ENC_TYPE, IV_TYPE]  # , SEED_TYPE]
 
 
 class TLSBasetext:
@@ -45,7 +45,7 @@ class Record:
         self._key_mac = None
         self._key_enc = None
         self._iv = None
-        self._seed = None
+        # self._seed = None
 
     def update_key(self, key_type, value):
         if key_type not in KEY_TYPES:
@@ -63,55 +63,6 @@ class Record:
             setattr(self, '_' + key_type, None)
         self._is_cipher_mode = False
 
-    def _evaluate_mac(self, rec):
-        seqnum_bytes = self._seqnum.to_bytes(8, byteorder='big')
-        mac_data = seqnum_bytes + rec.to_bytes()
-        key_mac_seqnum = self._tlstree(self._key_mac, self._seqnum)
-        block_cipher = Kuznyechik()
-        cmac = CMAC(block_cipher, len(mac_data))
-        return cmac.calculate(mac_data, key_mac_seqnum)
-
-    def _encrypt(self, fragment, rec_mac):
-        enc_data = fragment + rec_mac
-        key_enc_seqnum = self._tlstree(self._key_mac, self._seqnum)
-        iv_seqnum = (int.from_bytes(self._iv) + self._seqnum) % (2 ** 64)
-        iv_seqnum = iv_seqnum.to_bytes(8, byteorder='big')
-        block_cipher = Kuznyechik()
-        enc = CTR_ACPKM(block_cipher, 32, 16)
-        return enc.encrypt(enc_data, key_enc_seqnum, iv_seqnum)
-
-    def _diver(self, level, K, D):
-        R = 1
-        L = 256
-        return KDF_TREE_256(K, str.encode('level' + str(level)), self._seed, R, L, self._seqnum + 1)
-
-    def _tlstree(self, key, i):
-        C1 = int.from_bytes(b'\xff\xff\xff\xff\x00\x00\x00\x00')
-        C2 = int.from_bytes(b'\xff\xff\xff\xff\xff\xf8\x00\x00')
-        C3 = int.from_bytes(b'\xff\xff\xff\xff\xff\xff\xff\xc0')
-        return self._diver(3,
-            self._diver(
-                2, self._diver(1, key, (i & C1).to_bytes(8, byteorder='big')),
-                (i & C2).to_bytes(8, byteorder='big')
-            ),
-            (i & C3).to_bytes(8, byteorder='big')
-        )
-
-
-class Writer(Record):
-    def create_messages(self, msg_type, message):
-        fragment_generator = self._make_fragments_generator(message)
-        messages = []
-        for fragment in fragment_generator:
-            plaintext = self._create_plaintext(msg_type, fragment)
-            self._seqnum += 1
-            if self._is_cipher_mode:
-                mac = self._evaluate_mac(plaintext)
-                encrypted_fragment = self._encrypt(fragment, mac)
-                plaintext = self._create_plaintext(msg_type, encrypted_fragment, 'cipher')
-            messages.append(plaintext.to_bytes())
-        return messages
-
     def _create_plaintext(self, msg_type, fragment, text_type='plain'):
         type2byte = {CCS_TYPE: b'\x14',
                      ALERT_TYPE: b'\x15',
@@ -127,6 +78,51 @@ class Writer(Record):
             return TLSCiphertext(type2byte[msg_type], self._PROTOCOL, fragment)
         else:
             raise ValueError('unknown text type: {}'.format(text_type))
+
+    def _evaluate_mac(self, rec):
+        seqnum_bytes = self._seqnum.to_bytes(8, byteorder='big')
+        mac_data = seqnum_bytes + rec.to_bytes()
+        key_mac_seqnum = self._tlstree(self._key_mac, self._seqnum)
+        block_cipher = Kuznyechik()
+        cmac = CMAC(block_cipher, 16)
+        return cmac.calculate(mac_data, key_mac_seqnum)
+
+    def _encrypt(self, fragment, rec_mac):
+        enc_data = fragment + rec_mac
+        key_enc_seqnum = self._tlstree(self._key_enc, self._seqnum)
+        iv_seqnum = (int.from_bytes(self._iv, byteorder='big') + self._seqnum) % (2 ** 64)
+        iv_seqnum = iv_seqnum.to_bytes(8, byteorder='big')
+        block_cipher = Kuznyechik()
+        enc = CTR_ACPKM(block_cipher, 32, 16)
+        return enc.encrypt(enc_data, key_enc_seqnum, iv_seqnum)
+
+    def _diver(self, level, k, d):
+        # seed?
+        r = 1
+        l = 256
+        return KDF_TREE_256(k, str.encode('level' + str(level)), d, r, l, self._seqnum + 1)
+
+    def _tlstree(self, key, i):
+        c1 = int.from_bytes(b'\xff\xff\xff\xff\x00\x00\x00\x00', byteorder='big')
+        c2 = int.from_bytes(b'\xff\xff\xff\xff\xff\xf8\x00\x00', byteorder='big')
+        c3 = int.from_bytes(b'\xff\xff\xff\xff\xff\xff\xff\xc0', byteorder='big')
+        return self._diver(3, self._diver(2, self._diver(1, key, (i & c1).to_bytes(8, byteorder='big')),
+            (i & c2).to_bytes(8, byteorder='big')),(i & c3).to_bytes(8, byteorder='big'))
+
+
+class Writer(Record):
+    def _create_messages(self, msg_type, message):
+        fragment_generator = self._make_fragments_generator(message)
+        messages = []
+        for fragment in fragment_generator:
+            plaintext = self._create_plaintext(msg_type, fragment)
+            self._seqnum += 1
+            if self._is_cipher_mode:
+                mac = self._evaluate_mac(plaintext)
+                encrypted_fragment = self._encrypt(fragment, mac)
+                plaintext = self._create_plaintext(msg_type, encrypted_fragment, 'cipher')
+            messages.append(plaintext.to_bytes())
+        return messages
 
     def _make_fragments_generator(self, message):
         length = len(message)
@@ -144,7 +140,8 @@ class Writer(Record):
 
 
 class Reader(Record):
-    def parse_header(self, header):
+
+    def _parse_header(self, header):
         byte2type = {b'\x14': CCS_TYPE,
                      b'\x15': ALERT_TYPE,
                      b'\x16': HANDSHAKE_TYPE,
@@ -153,18 +150,41 @@ class Reader(Record):
         length = int.from_bytes(header[3:], byteorder='big')
         return msg_type, length
 
-    def parse_fragment(self, fragment):
+    def _parse_fragment(self, msg_type, fragment):
         self._seqnum += 1
+        message = fragment
+        if self._is_cipher_mode:
+            decrypted_fragment = self._decrypt(fragment)
+            message = decrypted_fragment[:-16]
+            rec_mac = decrypted_fragment[-16:]
+            if not self._check_mac(msg_type, message, rec_mac):
+                msg_type = ALERT_TYPE
+                message = ''
+        return msg_type, message
 
+    def _decrypt(self, fragment):
+        key_enc_seqnum = self._tlstree(self._key_enc, self._seqnum)
+        iv_seqnum = (int.from_bytes(self._iv, byteorder='big') + self._seqnum) % (2 ** 64)
+        iv_seqnum = iv_seqnum.to_bytes(8, byteorder='big')
+        block_cipher = Kuznyechik()
+        dec = CTR_ACPKM(block_cipher, 32, 16)
+        return dec.decrypt(fragment, key_enc_seqnum, iv_seqnum)
+
+    def _check_mac(self, msg_type, message, mac):
+        plaintext = self._create_plaintext(msg_type, message)
+        evaluated_mac = self._evaluate_mac(plaintext)
+        return mac == evaluated_mac
 
 
 class TLSNetwork:
     def __init__(self, host, port):
         self.host = host
         self.port = port
-        self._writer = Writer()
-        self._reader = Reader()
+        self.writer = Writer()
+        self.reader = Reader()
         self._socket = socket.socket()
+        self._conn = None
+        self._addr = None
 
     def __enter__(self):
         return self
@@ -173,12 +193,27 @@ class TLSNetwork:
         self._socket.close()
 
     def send(self, msg_type, message):
-        messages = self._writer.create_messages(msg_type, message)
+        messages = self.writer._create_messages(msg_type, message)
         for msg in messages:
-            ### send magic
+            self._conn.send(msg)
 
-    def recieve(self):
-        ### recieve magic
+    def receive(self):
+        header = self._get_n_bytes(5)
+        msg_type, fragment_length = self.reader._parse_header(header)
+
+        fragment = self._get_n_bytes(fragment_length)
+        msg_type, message = self.reader._parse_fragment(msg_type, fragment)
+        return msg_type, message
+
+    def _get_n_bytes(self, n_bytes):
+        data = b''
+        while n_bytes > 0:
+            received_data = self._conn.recv(n_bytes)
+            if not received_data:
+                raise ConnectionError('socket was closed')
+            data += received_data
+            n_bytes -= len(received_data)
+        return data
 
 
 class TLSNetworkServer(TLSNetwork):
@@ -190,12 +225,14 @@ class TLSNetworkServer(TLSNetwork):
         self._socket.listen(1)
 
     def accept(self):
-        return self._socket.accept()
+        self._conn, self._addr = self._socket.accept()
+        return self._addr
 
 
 class TLSNetworkClient(TLSNetwork):
     def __init__(self, host, port):
         TLSNetwork.__init__(host, port)
+        self._conn = self._socket
 
     def connect(self):
-        self.connect((self.host, self.port))
+        self._conn.connect((self.host, self.port))
