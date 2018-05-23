@@ -13,7 +13,7 @@ import random
 from message_structures import SERVER_HELLO_MESSAGE, CLIENT_HELLO_MESSAGE
 from message_structures import CERTIFICATE_MESSAGE, CLIENT_KEY_EXCHANGE_MESSAGE
 from message_structures import CERTIFICATE_REQUEST_MESSAGE, SERVER_HELLO_DONE_MESSAGE
-from message_structures import FINISHED_MESSAGE
+from message_structures import CERTIFICATE_VERIFY_MESSAGE, FINISHED_MESSAGE
 
 
 class HandshakeServer:
