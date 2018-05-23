@@ -115,6 +115,7 @@ ID | name
 0 | Alex Zabelin
 1 | Pavel Koshkin
 2 | Bulat Ibragimov
+3 | Alex Zakharov
 
 ## Необходимые стандарты
 
