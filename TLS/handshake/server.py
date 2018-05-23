@@ -1,4 +1,5 @@
 import sys
+import asn1
 import os
 
 handshake_dir = os.path.dirname(os.path.abspath(__file__))
@@ -20,10 +21,32 @@ class HandshakeServer:
                     message_type
                 )
             )
-        return message
+        return self._decode(message)
 
     def _send(self, message):
         self._network.send(HANDSHAKE_TYPE, message)
+
+    def _decode(self, bytes_string):
+        decoder = asn1.Decoder()
+        while not decoder.eof():
+            tag = input_stream.peek()
+            if tag.typ == asn1.TypePrimitive:
+                tag, value = input_stream.read()
+                output_stream.write(' ' * indent)
+                output_stream.write('[{}] {}: {}\n'.format(
+                    class_id_to_string(tag.cls),
+                    tag_id_to_string(tag.nr),
+                    value_to_string(tag.nr, value)
+                ))
+            elif tag.typ == asn1.TypeConstructed:
+                output_stream.write(' ' * indent)
+                output_stream.write('[{}] {}\n'.format(
+                    class_id_to_string(tag.cls),
+                    tag_id_to_string(tag.nr)
+                ))
+                input_stream.enter()
+                pretty_print(input_stream, output_stream, indent + 2)
+                input_stream.leave()
 
     def handshake(self):
         self._receive_hello()
@@ -39,11 +62,6 @@ class HandshakeServer:
         self._send_change_cipher_spec()
         self._send_finished()
 
-    def receive_message(self, message):
-        """
-        message: bytes
-        """
-        message_type = bytes(message[0])
-        header = bytes(message[1:3])
-        json = loads(message[3:])
-        print(message_type, header, json)
+    def receive_hello():
+        hello_message =  self._receive()
+        self._r_c = hello_message["r_c"]
