@@ -6,6 +6,8 @@ handshake_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(handshake_dir, '../../'))
 
 from TLS.record.record import HANDSHAKE_TYPE
+from TLS.elliptic.elliptic_curve import Point
+from TLS.certificate.public_keys import public_keys
 import time
 import random
 from message_structures import SERVER_HELLO_MESSAGE, CLIENT_HELLO_MESSAGE
@@ -15,7 +17,8 @@ from message_structures import FINISHED_MESSAGE
 
 
 class HandshakeServer:
-    def __init__(self, network):
+    def __init__(self, network, user_id):
+        self._id = user_id
         self._network = network
 
     def _receive(self):
@@ -69,4 +72,11 @@ class HandshakeServer:
             }],
         }
         byte_message = SERVER_HELLO_MESSAGE.to_bytes(data)
+        self._send(byte_message)
+
+    def _send_certificate(self):
+        key = public_keys[self._id]
+        cert = int.to_bytes(self._certificate['id']) + Point(key[0], key[1]).to_bytes()
+        data = {'certificate_list': [{'ASN.1Cert': bytes.fromhex(cert)}]}
+        byte_message = CERTIFICATE_MESSAGE.to_bytes(data)
         self._send(byte_message)
