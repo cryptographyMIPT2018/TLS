@@ -24,10 +24,6 @@ class NoLengthStructure(Structure):
         self.name = name
 
     def parse_bytes(self, bytes_str):
-        print('-'*100)
-        print(self.name)
-        print(bytes_str)
-        print('-'*100)
         result_data = {}
         total_len = 0
         for child in self._children:
@@ -56,10 +52,6 @@ class VariableLenStructure(Structure):
         self._children = children
 
     def parse_bytes(self, bytes_str):
-        print('-'*100)
-        print(self.name)
-        print(bytes_str)
-        print('-'*100)
         length = int.from_bytes(bytes_str[:self._length_of_length], byteorder='big')
         total_length = self._length_of_length + length
         check_length = 0
@@ -96,10 +88,6 @@ class FixedLenStructure(Structure):
         self._length = length
 
     def parse_bytes(self, bytes_str):
-        print('-'*100)
-        print(self.name)
-        print(bytes_str)
-        print('-'*100)
         return {self.name: bytes_str[:self._length]}, self._length
 
     def to_bytes(self, data):
@@ -120,11 +108,6 @@ class ListStructure(Structure):
         length = int.from_bytes(bytes_str[:self._length_of_length], byteorder='big')
         total_length = length + self._length_of_length
         check_length = 0
-        print('-'*100)
-        print(self.name)
-        print(length)
-        print(bytes_str)
-        print('-'*100)
         result = []
         cutted_str = bytes_str[self._length_of_length:]
 

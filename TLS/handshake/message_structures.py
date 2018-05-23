@@ -74,3 +74,4 @@ client_hello_children = [
 
 SERVER_HELLO = HandshakeMessageStructure(b'\x02', server_hello_children)
 CLIENT_HELLO = HandshakeMessageStructure(b'\x01', client_hello_children)
+CLIENT_KEY_EXCHANGE_MESSAGE = HandshakeMessageStructure(b'\x10', [FixedLenStructure('exchange_keys', 149)])

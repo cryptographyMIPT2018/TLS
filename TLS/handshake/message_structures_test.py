@@ -1,5 +1,5 @@
 import unittest
-from message_structures import SERVER_HELLO, CLIENT_HELLO
+from message_structures import SERVER_HELLO, CLIENT_HELLO, CLIENT_KEY_EXCHANGE_MESSAGE
 
 
 class TestServerHello(unittest.TestCase):
@@ -59,8 +59,21 @@ class TestClientHello(unittest.TestCase):
 
     def test_parse_bytes(self):
         result = CLIENT_HELLO.parse_bytes(self.bytes_str)
-        print(result)
-        print(self.data)
+        self.assertDictEqual(result, self.data)
+
+
+class TestClientKeyExchange(unittest.TestCase):
+    bytes_str = bytes.fromhex("10 00 00 95 30 81 92 04 28 9E C3 E0 76 C5 56 73 1E 3B 25 3B E5 8B 8F AD D4 A9 0A 24 B3 42 F6 13 A5 E2 AC 13 CE 07 53 0A 00 A9 8C 1E E2 A2 AF C0 E0 30 66 30 1F 06 08 2A 85 03 07 01 01 01 01 30 13 06 07 2A 85 03 02 02 24 00 06 08 2A 85 03 07 01 01 02 02 03 43 00 04 40 93 07 E0 98 C1 71 88 F1 F1 47 7F EF B8 7F AE F1 BB CD 95 67 3B 1B 8F 97 03 A2 62 D2 63 6D F3 A8 87 F8 14 1F EA C2 5A 17 CC B5 96 04 61 ED 16 B0 F8 B1 BE 93 59 43 95 A1 0E 64 85 44 6B 5D CA 34")
+    data = {
+        "exchange_keys": bytes.fromhex("30819204289EC3E076C556731E3B253BE58B8FADD4A90A24B342F613A5E2AC13CE07530A00A98C1EE2A2AFC0E03066301F06082A85030701010101301306072A85030202240006082A8503070101020203430004409307E098C17188F1F1477FEFB87FAEF1BBCD95673B1B8F9703A262D2636DF3A887F8141FEAC25A17CCB5960461ED16B0F8B1BE93594395A10E6485446B5DCA34")
+    }
+
+    def test_to_bytes(self):
+        result = CLIENT_KEY_EXCHANGE_MESSAGE .to_bytes(self.data)
+        self.assertTrue(self.bytes_str == result)
+
+    def test_parse_bytes(self):
+        result = CLIENT_KEY_EXCHANGE_MESSAGE .parse_bytes(self.bytes_str)
         self.assertDictEqual(result, self.data)
 
 
