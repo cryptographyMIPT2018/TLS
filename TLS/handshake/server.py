@@ -6,10 +6,12 @@ handshake_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(handshake_dir, '../../'))
 
 from TLS.record.record import HANDSHAKE_TYPE
-from message_types import MessageTypes
-import asn1
 import time
 import random
+from message_structures import SERVER_HELLO_MESSAGE, CLIENT_HELLO_MESSAGE
+from message_structures import CERTIFICATE_MESSAGE, CLIENT_KEY_EXCHANGE_MESSAGE
+from message_structures import CERTIFICATE_REQUEST_MESSAGE, SERVER_HELLO_DONE_MESSAGE
+from message_structures import FINISHED_MESSAGE
 
 
 class HandshakeServer:
@@ -30,28 +32,6 @@ class HandshakeServer:
     def _send(self, message):
         self._network.send(HANDSHAKE_TYPE, message)
 
-    def _decode(self, bytes_string):
-        decoder = asn1.Decoder()
-        while not decoder.eof():
-            tag = input_stream.peek()
-            if tag.typ == asn1.TypePrimitive:
-                tag, value = input_stream.read()
-                output_stream.write(' ' * indent)
-                output_stream.write('[{}] {}: {}\n'.format(
-                    class_id_to_string(tag.cls),
-                    tag_id_to_string(tag.nr),
-                    value_to_string(tag.nr, value)
-                ))
-            elif tag.typ == asn1.TypeConstructed:
-                output_stream.write(' ' * indent)
-                output_stream.write('[{}] {}\n'.format(
-                    class_id_to_string(tag.cls),
-                    tag_id_to_string(tag.nr)
-                ))
-                input_stream.enter()
-                pretty_print(input_stream, output_stream, indent + 2)
-                input_stream.leave()
-
     def handshake(self):
         self._receive_hello()
         self._send_hello()
@@ -66,8 +46,8 @@ class HandshakeServer:
         self._send_change_cipher_spec()
         self._send_finished()
 
-    def receive_hello():
-        hello_message =  self._receive()
+    def receive_hello(self):
+        hello_message = self._receive()
         self._r_c = hello_message["r_c"]
 
     def _send_hello(self):
@@ -75,7 +55,18 @@ class HandshakeServer:
 
         # if work with several connections in one session more logic is required
         self._session_id = os.urandom(16)
-        compression_method = b'\x00'
-        extention = bytes.fromhex('0005FF01000100')
-
-        # message = s
+        data = {
+            'server_version': {'major': b'\x03', 'minor': b'\x03'},
+            'random': self._r_s,
+            'session_id': self._session_id,
+            'cipher_suite': bytes.fromhex('FF89'),
+            'compression_method': b'\x00',
+            'extensions': [{
+                'Extention': {
+                    'extension_type': bytes.fromhex('FF01'),
+                    'extension_data': {'renegotiated_connection': b''}
+                }
+            }],
+        }
+        byte_message = SERVER_HELLO_MESSAGE.to_bytes(data)
+        self._send(byte_message)
