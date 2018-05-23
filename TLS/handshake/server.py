@@ -6,7 +6,11 @@ handshake_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(handshake_dir, '../../'))
 
 from TLS.record.record import HANDSHAKE_TYPE
-from json import dumps, loads
+from message_types import MessageTypes
+import asn1
+import time
+import random
+
 
 class HandshakeServer:
     def __init__(self, network):
@@ -65,3 +69,13 @@ class HandshakeServer:
     def receive_hello():
         hello_message =  self._receive()
         self._r_c = hello_message["r_c"]
+
+    def _send_hello(self):
+        self._r_s = int.to_bytes(int(time.time()), 4, byteorder='big') + os.urandom(28)
+
+        # if work with several connections in one session more logic is required
+        self._session_id = os.urandom(16)
+        compression_method = b'\x00'
+        extention = bytes.fromhex('0005FF01000100')
+
+        # message = s
