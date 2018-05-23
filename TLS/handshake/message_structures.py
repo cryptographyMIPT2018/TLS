@@ -72,6 +72,11 @@ client_hello_children = [
     )
 ]
 
-SERVER_HELLO = HandshakeMessageStructure(b'\x02', server_hello_children)
-CLIENT_HELLO = HandshakeMessageStructure(b'\x01', client_hello_children)
+certificate_children = [
+    ListStructure('certificate_list', 3, VariableLenStructure('ASN.1Cert', 3), 1)
+]
+
+SERVER_HELLO_MESSAGE = HandshakeMessageStructure(b'\x02', server_hello_children)
+CLIENT_HELLO_MESSAGE = HandshakeMessageStructure(b'\x01', client_hello_children)
 CLIENT_KEY_EXCHANGE_MESSAGE = HandshakeMessageStructure(b'\x10', [FixedLenStructure('exchange_keys', 149)])
+CERTIFICATE_MESSAGE = HandshakeMessageStructure(b'\x0b', certificate_children)
