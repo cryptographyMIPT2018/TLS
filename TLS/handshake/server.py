@@ -40,9 +40,10 @@ class HandshakeServer:
         self._send_finished()
 
     def receive_message(self, message):
-    """
-    message: bytes
-    """
-        message_type = (message[0])
-        header = message[:3]
-        json = loads(message)
+        """
+        message: bytes
+        """
+        message_type = bytes(message[0])
+        header = bytes(message[1:3])
+        json = loads(message[3:])
+        print(message_type, header, json)
