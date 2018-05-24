@@ -1,4 +1,10 @@
-from block_cipher import *
+import os
+import sys
+
+block_cipher_mode_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(block_cipher_mode_dir, '../../'))
+
+from TLS.kuznyechik.block_cipher import *
 
 
 class BlockCipherMode:
