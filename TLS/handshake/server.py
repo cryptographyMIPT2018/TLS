@@ -1,5 +1,6 @@
 import sys
 import os
+import asn1
 
 handshake_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(handshake_dir, '../../'))
@@ -8,9 +9,12 @@ from TLS.record.tls_network import HANDSHAKE_TYPE, CCS_TYPE
 from TLS.record.tls_network import KEY_MAC_TYPE, KEY_ENC_TYPE, IV_TYPE
 from TLS.elliptic.elliptic_curve import Point
 from TLS.certificate.public_keys import public_keys
-from TLS.certificate.certificate import get_private_key_bytes
 from TLS.PRF.prf import prf256
 from TLS.hash.hash import hash256
+from TLS.certificate.certificate import get_private_key_bytes, verify_certificate
+from TLS.signature.signature import Signer
+from TLS.elliptic.elliptic_curve import EllipticCurve
+from TLS.kexp_kimp.kexp import expand_key as KExp15
 import time
 import random
 from keg import KEG
@@ -62,18 +66,22 @@ class HandshakeServer:
         self._send_finished()
 
     def _receive_hello(self):
-        client_hello_message = CLIENT_HELLO_MESSAGE.parse_bytes(self._receive())
+        bytes_str = self._receive()
+        client_hello_message = CLIENT_HELLO_MESSAGE.parse_bytes(bytes_str)
         self._r_c = client_hello_message["random"]
+        self._HM += get_history_record(bytes_str)
 
     def _receive_certificate(self):
-        certificate_message = CERTIFICATE_MESSAGE.parse_bytes(self._receive())
+        bytes_str = self._receive()
+        certificate_message = CERTIFICATE_MESSAGE.parse_bytes(bytes_str)
         cert = certificate_message["certificate_list"][0]['ASN.1Cert']
-        client_id = cert[:1]
-        point = Point.from_bytes(cert[1:])
-        public_key = public_keys[id]
+        if not verify_certificate(cert):
+            raise ValueError("Wrong cert")
+        self._HM += get_history_record(bytes_str)
 
     def _receive_key_exchange(self):
-        key_exchange_message = CLIENT_KEY_EXCHANGE_MESSAGE.parse_bytes(self._receive())
+        bytes_str = self._receive()
+        key_exchange_message = CLIENT_KEY_EXCHANGE_MESSAGE.parse_bytes(bytes_str)
         exchange_keys = key_exchange_message['exchange_keys']
         decoder = asn1.Decoder()
         decoder.start(exchange_keys)
@@ -108,6 +116,16 @@ class HandshakeServer:
         k_exp_enc = keg_res[len(keg_res) // 2:]
         IV = H[25:(24 + len(H) // 2)]
         self._PMS = KExp15(PMSEXP, k_exp_mac, k_exp_enc, IV)
+        self._HM += get_history_record(bytes_str)
+
+    def _receive_certificate_verify(self):
+        bytes_str = self._receive()
+        certificate_verify_message = CERTIFICATE_VERIFY_MESSAGE.parse_bytes(bytes_str)
+        sign = certificate_verify_message.signature
+        signer = Signer(EllipticCurve("C"))
+        if not signer.check(self._HM, sign):
+            raise ValueError("Wrong sign")
+        self._HM += get_history_record(bytes_str)
 
 
     def _generate_keys(self):
