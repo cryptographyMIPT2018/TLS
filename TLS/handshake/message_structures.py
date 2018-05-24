@@ -1,4 +1,4 @@
-from basic_structures import Structure, FixedLenStructure, NoLengthStructure, VariableLenStructure, ListStructure
+from .basic_structures import Structure, FixedLenStructure, NoLengthStructure, VariableLenStructure, ListStructure
 
 
 class HandshakeMessageStructure:

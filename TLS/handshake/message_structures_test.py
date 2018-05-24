@@ -1,9 +1,15 @@
 import unittest
-from message_structures import SERVER_HELLO_MESSAGE, CLIENT_HELLO_MESSAGE
-from message_structures import CERTIFICATE_MESSAGE, CLIENT_KEY_EXCHANGE_MESSAGE
-from message_structures import CERTIFICATE_REQUEST_MESSAGE, SERVER_HELLO_DONE_MESSAGE
-from message_structures import CERTIFICATE_VERIFY_MESSAGE, FINISHED_MESSAGE
-from message_structures import get_history_record
+import sys
+import os
+
+handshake_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(handshake_dir, '../../'))
+
+from TLS.handshake.message_structures import SERVER_HELLO_MESSAGE, CLIENT_HELLO_MESSAGE
+from TLS.handshake.message_structures import CERTIFICATE_MESSAGE, CLIENT_KEY_EXCHANGE_MESSAGE
+from TLS.handshake.message_structures import CERTIFICATE_REQUEST_MESSAGE, SERVER_HELLO_DONE_MESSAGE
+from TLS.handshake.message_structures import CERTIFICATE_VERIFY_MESSAGE, FINISHED_MESSAGE
+from TLS.handshake.message_structures import get_history_record
 
 
 class TestServerHello(unittest.TestCase):

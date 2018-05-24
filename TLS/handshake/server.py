@@ -11,21 +11,21 @@ sys.path.append(os.path.join(handshake_dir, '../../'))
 from TLS.record.tls_network import HANDSHAKE_TYPE, CCS_TYPE
 from TLS.record.tls_network import KEY_MAC_TYPE, KEY_ENC_TYPE, IV_TYPE
 from TLS.elliptic.elliptic_curve import Point
-from TLS.certificate.public_keys import public_keys
+from TLS.certificates.public_keys import public_keys
 from TLS.PRF.prf import prf256
 from TLS.hash.hash import hash256
-from TLS.certificate.certificate import get_private_key_bytes, verify_certificate
+from TLS.certificates.certificate import get_private_key_bytes, verify_certificate
 from TLS.signature.signature import Signer
 from TLS.elliptic.elliptic_curve import EllipticCurve
 from TLS.kexp_kimp.kexp import expand_key as KExp15
 from keg import KEG
 from constants import KEY_LENGTH, BLOCK_LENGTH
-from message_structures import SERVER_HELLO_MESSAGE, CLIENT_HELLO_MESSAGE
-from message_structures import CERTIFICATE_MESSAGE, CLIENT_KEY_EXCHANGE_MESSAGE
-from message_structures import CERTIFICATE_REQUEST_MESSAGE, SERVER_HELLO_DONE_MESSAGE
-from message_structures import CERTIFICATE_VERIFY_MESSAGE, FINISHED_MESSAGE
-from message_structures import CHANGE_CIPHER_SPEC
-from message_structures import get_history_record
+from .message_structures import SERVER_HELLO_MESSAGE, CLIENT_HELLO_MESSAGE
+from .message_structures import CERTIFICATE_MESSAGE, CLIENT_KEY_EXCHANGE_MESSAGE
+from .message_structures import CERTIFICATE_REQUEST_MESSAGE, SERVER_HELLO_DONE_MESSAGE
+from .message_structures import CERTIFICATE_VERIFY_MESSAGE, FINISHED_MESSAGE
+from .message_structures import CHANGE_CIPHER_SPEC
+from .message_structures import get_history_record
 
 
 class HandshakeServer:
