@@ -31,15 +31,9 @@ class HandshakeServer:
         self._id = user_id
         self._network = network
 
-    def _receive(self):
+    def _receive(self, record_msg_type=HANDSHAKE_TYPE):
+        assert record_msg_type in [HANDSHAKE_TYPE, CCS_TYPE]
         message_type, message = self._network.receive()
-        if message_type != HANDSHAKE_TYPE:
-            raise ValueError(
-                'message_type should be {}. Got {}.'.format(
-                    HANDSHAKE_TYPE,
-                    message_type
-                )
-            )
         return message
 
     def _send(self, message_data, message_structures=None, record_msg_type=HANDSHAKE_TYPE):
@@ -114,7 +108,7 @@ class HandshakeServer:
         keg_res = KEG(k_s, Q_eph, H)
         k_exp_mac = keg_res[:len(keg_res) // 2]
         k_exp_enc = keg_res[len(keg_res) // 2:]
-        IV = H[25:(24 + len(H) // 2)]
+        IV = H[25:(24 + BLOCK_LENGTH // 2)]
         self._PMS = KExp15(PMSEXP, k_exp_mac, k_exp_enc, IV)
         self._HM += get_history_record(bytes_str)
 
@@ -127,6 +121,9 @@ class HandshakeServer:
             raise ValueError("Wrong sign")
         self._HM += get_history_record(bytes_str)
 
+    def _receive_change_chipher_spec(self):
+        self._receive(record_msg_type=CCS_TYPE)
+        self._change_cipher_spec('read')
 
     def _generate_keys(self):
         self._ms = prf256(self._pms, bytes("extended master secret"), hash256(self._hm))
