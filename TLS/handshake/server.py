@@ -8,6 +8,9 @@ from TLS.record.tls_network import HANDSHAKE_TYPE, CCS_TYPE
 from TLS.record.tls_network import KEY_MAC_TYPE, KEY_ENC_TYPE, IV_TYPE
 from TLS.elliptic.elliptic_curve import Point
 from TLS.certificate.public_keys import public_keys
+from TLS.certificate.certificate import get_private_key_bytes
+from TLM.hash.hash import hash256
+from keg import KEG
 import time
 import random
 from message_structures import SERVER_HELLO_MESSAGE, CLIENT_HELLO_MESSAGE
@@ -67,7 +70,40 @@ class HandshakeServer:
 
     def _receive_key_exchange(self):
         key_exchange_message = CLIENT_KEY_EXCHANGE_MESSAGE.parse_bytes(self._receive())
+        exchange_keys = key_exchange_message['exchange_keys']
+        decoder = asn1.Decoder()
+        decoder.start(exchange_keys)
+        '''
+        decoder.enter() (
+            tag, PMSEXP = decoder.read()
+            decoder.enter() (
+                decoder.enter() (
+                    tag, algorithm = decoder.read()
+                    tag, parameters = decoder.read()
+                ) decoder.leave()
+                tag, subjectPublicKey = decoder.read()
+            ) decoder.leave()
+        ) decoder.leave()
+        '''
+        decoder.enter()
+        tag, PMSEXP = decoder.read()
+        decoder.enter()
+        decoder.enter()
+        tag, algorithm = decoder.read()
+        tag, parameters = decoder.read()
+        decoder.leave()
+        tag, subjectPublicKey = decoder.read()
+        decoder.leave()
+        decoder.leave()
 
+        Q_eph = subjectPublicKey
+        H = hash256(self._r_c + self._r_s)
+        k_s = get_private_key_bytes()
+        keg_res = KEG(k_s, Q_eph, H)
+        k_exp_mac = keg_res[:len(keg_res) // 2]
+        k_exp_enc = keg_res[len(keg_res) // 2:]
+        IV = H[25:(24 + len(H) // 2)]
+        self._PMS = KExp15(PMSEXP, k_exp_mac, k_exp_enc, IV)
 
 
     def _send_hello(self):
