@@ -4,7 +4,7 @@ from TLS.VKO.vko import *
 
 
 class VKOTest1(unittest.TestCase):
-    def test_vko(self):
+    def test_vko_256(self):
         UMK = int.from_bytes(bytes.fromhex("1d 80 60 3c 85 44 c7 27"), "little")
         x = int.from_bytes(bytes.fromhex(
             "c9 90 ec d9 72 fc e8 4e c4 db 02 27 78 f5 0f ca c7 26 f4 67 08 38 4b 8d 45 83 04 96 2d 71 47 f8 c2 db 41 ce f2 2c 90 b1 02 f2 96 84 04 f9 b9 be 6d 47 c7 96 92 d8 18 26 b3 2b 8d ac a4 3c b6 67"),
@@ -21,10 +21,30 @@ class VKOTest1(unittest.TestCase):
         self.assertEqual(X_answer, X.to_bytes())
         Y_answer = bytes.fromhex("19 2f e1 83 b9 71 3a 07 72 53 c7 2c 87 35 de 2e a4 2a 3d bc 66 ea 31 78 38 b6 5f a3 25 23 cd 5e fc a9 74 ed a7 c8 63 f4 95 4d 11 47 f1 f2 b2 5c 39 5f ce 1c 12 91 75 e8 76 d1 32 e9 4e d5 a6 51 04 88 3b 41 4c 9b 59 2e c4 dc 84 82 6f 07 d0 b6 d9 00 6d da 17 6c e4 8c 39 1e 3f 97 d1 02 e0 3b b5 98 bf 13 2a 22 8a 45 f7 20 1a ba 08 fc 52 4a 2d 77 e4 3a 36 2a b0 22 ad 40 28 f7 5b de 3b 79")
         self.assertEqual(Y_answer, Y.to_bytes())
-        KEK_X = KEK_VKO(x, Y, UMK, curve)
-        KEK_Y = KEK_VKO(y, X, UMK, curve)
+        KEK_X = KEK_VKO256(x, Y, UMK, curve)
+        KEK_Y = KEK_VKO256(y, X, UMK, curve)
         self.assertEqual(KEK_X, KEK_Y)
         KEK_answer = bytes.fromhex("c9 a9 a7 73 20 e2 cc 55 9e d7 2d ce 6f 47 e2 192c ce a9 5f a6 48 67 05 82 c0 54 c0 ef 36 c2 21")
+        self.assertEqual(KEK_X, KEK_answer)
+
+    def test_vko_512(self):
+        UMK = int.from_bytes(bytes.fromhex("1d 80 60 3c 85 44 c7 27"), "little")
+        x = int.from_bytes(bytes.fromhex(
+            "c9 90 ec d9 72 fc e8 4e c4 db 02 27 78 f5 0f ca c7 26 f4 67 08 38 4b 8d 45 83 04 96 2d 71 47 f8 c2 db 41 ce f2 2c 90 b1 02 f2 96 84 04 f9 b9 be 6d 47 c7 96 92 d8 18 26 b3 2b 8d ac a4 3c b6 67"),
+            "little")
+        y = int.from_bytes(bytes.fromhex(
+            "48 c8 59 f7 b6 f1 15 85 88 7c c0 5e c6 ef 13 90 cf ea 73 9b 1a 18 c0 d4 66 22 93 ef 63 b7 9e 3b 80 14 07 0b 44 91 85 90 b4 b9 96 ac fe a4 ed fb bb cc cc 8c 06 ed d8 bf 5b da 92 a5 13 92 d0 db"),
+            "little")
+
+        curve = EllipticCurve("A")
+        P = curve.get_forming()
+        X = curve.multiply_by_number(P, x)
+        Y = curve.multiply_by_number(P, y)
+        KEK_X = KEK_VKO512(x, Y, UMK, curve)
+        KEK_Y = KEK_VKO512(y, X, UMK, curve)
+        self.assertEqual(KEK_X, KEK_Y)
+        KEK_answer = bytes.fromhex(
+            "79 f0 02 a9 69 40 ce 7b de 32 59 a5 2e 01 52 97 ad aa d8 45 97 a0 d2 05 b5 0e 3e 17 19 f9 7b fa 7e e1 d2 66 1f a9 97 9a 5a a2 35 b5 58 a7 e6 d9f8 8f 98 2d d6 3f c3 5a 8e c0 dd 5e 24 2d 3b df")
         self.assertEqual(KEK_X, KEK_answer)
 
 if __name__ == '__main__':
