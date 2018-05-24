@@ -18,8 +18,8 @@ from TLS.certificates.certificate import get_private_key_bytes, verify_certifica
 from TLS.signature.signature import Signer
 from TLS.elliptic.elliptic_curve import EllipticCurve
 from TLS.kexp_kimp.kexp import expand_key as KExp15
-from keg import KEG
-from constants import KEY_LENGTH, BLOCK_LENGTH
+from .keg import KEG
+from .constants import KEY_LENGTH, BLOCK_LENGTH
 from .message_structures import SERVER_HELLO_MESSAGE, CLIENT_HELLO_MESSAGE
 from .message_structures import CERTIFICATE_MESSAGE, CLIENT_KEY_EXCHANGE_MESSAGE
 from .message_structures import CERTIFICATE_REQUEST_MESSAGE, SERVER_HELLO_DONE_MESSAGE
