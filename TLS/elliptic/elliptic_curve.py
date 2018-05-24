@@ -37,6 +37,18 @@ class Point:
             cords = str((self.x, self.y, self.z))
         return 'Point: ' + cords
 
+    def to_bytes(self):
+        return int.to_bytes(self.x, 64, 'little') + int.to_bytes(self.y, 64, 'little')
+
+    @staticmethod
+    def from_bytes(byte_data):
+        assert(len(byte_data) == 128)
+        x = int.from_bytes(byte_data[:64], 'little')
+        y = int.from_bytes(byte_data[64:], 'little')
+        return Point(x,y)
+
+
+
 
 class NotOnTheCurve(Exception):
     pass
