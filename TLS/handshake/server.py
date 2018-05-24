@@ -1,6 +1,9 @@
 import sys
 import os
 import asn1
+import time
+import random
+from math import ceil
 
 handshake_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(handshake_dir, '../../'))
@@ -15,9 +18,8 @@ from TLS.certificate.certificate import get_private_key_bytes, verify_certificat
 from TLS.signature.signature import Signer
 from TLS.elliptic.elliptic_curve import EllipticCurve
 from TLS.kexp_kimp.kexp import expand_key as KExp15
-import time
-import random
 from keg import KEG
+from constants import KEY_LENGTH, BLOCK_LENGTH
 from message_structures import SERVER_HELLO_MESSAGE, CLIENT_HELLO_MESSAGE
 from message_structures import CERTIFICATE_MESSAGE, CLIENT_KEY_EXCHANGE_MESSAGE
 from message_structures import CERTIFICATE_REQUEST_MESSAGE, SERVER_HELLO_DONE_MESSAGE
@@ -37,7 +39,7 @@ class HandshakeServer:
         return message
 
     def _send(self, message_data, message_structures=None, record_msg_type=HANDSHAKE_TYPE):
-        if message_structures is None:
+        if message_structures is not None:
             byte_message = message_structures.to_bytes(message_data)
         else:
             byte_message = message_data
@@ -126,7 +128,19 @@ class HandshakeServer:
         self._change_cipher_spec('read')
 
     def _generate_keys(self):
-        self._ms = prf256(self._pms, bytes("extended master secret"), hash256(self._hm))
+        self._ms = prf256(self._pms, bytes("extended master secret", 'utf-8'), hash256(self._hm), 2)[:48]
+        keys = prf256(
+            self._ms,
+            bytes("key expansion", 'utf-8'),
+            self._r_s + self._r_c,
+            int(ceil((4 * KEY_LENGTH + BLOCK_LENGTH) / 32))
+        )
+        self._k_read_mac_s = keys[:KEY_LENGTH]
+        self._k_write_mac_s = keys[KEY_LENGTH:2*KEY_LENGTH]
+        self._k_read_enc_s = keys[2*KEY_LENGTH:3*KEY_LENGTH]
+        self._k_write_enc_s = keys[3*KEY_LENGTH:4*KEY_LENGTH]
+        self._iv_read_s = keys[4*KEY_LENGTH:4*KEY_LENGTH + BLOCK_LENGTH // 2]
+        self._iv_write_s = keys[4*KEY_LENGTH + BLOCK_LENGTH // 2:4*KEY_LENGTH + BLOCK_LENGTH]
 
     def _send_hello(self):
         self._r_s = int.to_bytes(int(time.time()), 4, byteorder='big') + os.urandom(28)
@@ -192,4 +206,5 @@ class HandshakeServer:
         record.enable_cipher_mode()
 
     def _send_finished(self):
-        pass
+        server_verify_data = prf256(self._ms, bytes("server_finished", 'utf-8'), hash256(self._hm), 1)
+        self._send({'verify_data': server_verify_data}, FINISHED_MESSAGE)
