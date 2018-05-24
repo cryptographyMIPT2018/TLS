@@ -65,7 +65,7 @@ class HandshakeServer:
         bytes_str = self._receive()
         client_hello_message = CLIENT_HELLO_MESSAGE.parse_bytes(bytes_str)
         self._r_c = client_hello_message["random"]
-        self._HM += get_history_record(bytes_str)
+        self._hm += get_history_record(bytes_str)
 
     def _receive_certificate(self):
         bytes_str = self._receive()
@@ -73,7 +73,7 @@ class HandshakeServer:
         cert = certificate_message["certificate_list"][0]['ASN.1Cert']
         if not verify_certificate(cert):
             raise ValueError("Wrong cert")
-        self._HM += get_history_record(bytes_str)
+        self._hm += get_history_record(bytes_str)
 
     def _receive_key_exchange(self):
         bytes_str = self._receive()
@@ -112,20 +112,30 @@ class HandshakeServer:
         k_exp_enc = keg_res[len(keg_res) // 2:]
         IV = H[25:(24 + BLOCK_LENGTH // 2)]
         self._PMS = KExp15(PMSEXP, k_exp_mac, k_exp_enc, IV)
-        self._HM += get_history_record(bytes_str)
+        self._hm += get_history_record(bytes_str)
 
     def _receive_certificate_verify(self):
         bytes_str = self._receive()
         certificate_verify_message = CERTIFICATE_VERIFY_MESSAGE.parse_bytes(bytes_str)
         sign = certificate_verify_message.signature
         signer = Signer(EllipticCurve("C"))
-        if not signer.check(self._HM, sign):
+        if not signer.check(self._hm, sign):
             raise ValueError("Wrong sign")
-        self._HM += get_history_record(bytes_str)
+        self._hm += get_history_record(bytes_str)
 
     def _receive_change_chipher_spec(self):
         self._receive(record_msg_type=CCS_TYPE)
-        self._change_cipher_spec('read')
+        self._change_cipher_spec('reader')
+        self._hm += get_history_record("\x01")
+
+    def _receive_finished(self):
+        bytes_str = self._receive()
+        finished_message = FINISHED_MESSAGE.parse_bytes(bytes_str)
+        client_verify_data = finished_message['verify_data']
+        expected_client_verify_data = prf256(self._ms, bytes("client_finished", 'utf-8'), hash256(self._hm), 1)
+        assert client_verify_data == expected_client_verify_data
+        self._hm += get_history_record(bytes_str)
+
 
     def _generate_keys(self):
         self._ms = prf256(self._pms, bytes("extended master secret", 'utf-8'), hash256(self._hm), 2)[:48]
