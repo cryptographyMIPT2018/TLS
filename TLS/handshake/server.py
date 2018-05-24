@@ -1,5 +1,4 @@
 import sys
-import asn1
 import os
 
 handshake_dir = os.path.dirname(os.path.abspath(__file__))
