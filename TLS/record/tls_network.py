@@ -1,8 +1,14 @@
 import socket
-from ..kuznyechik.mac import CMAC
-from ..kuznyechik.block_cipher import Kuznyechik
-from ..kuznyechik.block_cipher_mode import CTR_ACPKM
-from ..KDF.kdf import KDF_TREE_256
+import os
+import sys
+
+tls_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(tls_dir, '../../'))
+
+from TLS.kuznyechik.mac import CMAC
+from TLS.kuznyechik.block_cipher import Kuznyechik
+from TLS.kuznyechik.block_cipher_mode import CTR_ACPKM
+from TLS.KDF.kdf import KDF_TREE_256
 
 HANDSHAKE_TYPE = 'Handshake'
 ALERT_TYPE = 'Alert'
