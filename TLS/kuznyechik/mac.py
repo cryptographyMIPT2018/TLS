@@ -69,9 +69,9 @@ class CMAC(MAC):
             xor = self._xor(xor, key1)
             code = self.cipher.encrypt(xor)
         else:
-            block = plain_text[offset:] + [0b10000000]
+            block = list(plain_text[offset:]) + [0b10000000]
             block += [0b00000000] * (self.cipher.block_size + offset - len(plain_text) - 1)
-            xor = self._xor(code, block)
+            xor = self._xor(code, bytes(block))
             xor = self._xor(xor, key2)
             code = self.cipher.encrypt(xor)
             
