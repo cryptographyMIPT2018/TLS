@@ -5,7 +5,7 @@ import os
 handshake_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(handshake_dir, '../../'))
 
-from TLS.record.record import HANDSHAKE_TYPE
+from TLS.record.tls_network import HANDSHAKE_TYPE, CCS_TYPE
 from TLS.elliptic.elliptic_curve import Point
 from TLS.certificate.public_keys import public_keys
 import time
@@ -14,7 +14,7 @@ from message_structures import SERVER_HELLO_MESSAGE, CLIENT_HELLO_MESSAGE
 from message_structures import CERTIFICATE_MESSAGE, CLIENT_KEY_EXCHANGE_MESSAGE
 from message_structures import CERTIFICATE_REQUEST_MESSAGE, SERVER_HELLO_DONE_MESSAGE
 from message_structures import CERTIFICATE_VERIFY_MESSAGE, FINISHED_MESSAGE
-
+from message_structures import CHANGE_CIPHER_SPEC
 
 class HandshakeServer:
     def __init__(self, network, user_id):
@@ -32,8 +32,11 @@ class HandshakeServer:
             )
         return self._decode(message)
 
-    def _send(self, message):
-        self._network.send(HANDSHAKE_TYPE, message)
+    def _send(self, message_data, message_structures=None, record_msg_type=HANDSHAKE_TYPE):
+        if message_structures is None:
+            message_
+            byte_message = message_structures.to_bytes(message_data)
+        self._network.send(record_msg_type, byte_message)
 
     def handshake(self):
         self._receive_hello()
@@ -71,12 +74,28 @@ class HandshakeServer:
                 }
             }],
         }
-        byte_message = SERVER_HELLO_MESSAGE.to_bytes(data)
-        self._send(byte_message)
+        self._send(data, SERVER_HELLO_MESSAGE)
 
     def _send_certificate(self):
         key = public_keys[self._id]
         cert = int.to_bytes(self._certificate['id']) + Point(key[0], key[1]).to_bytes()
         data = {'certificate_list': [{'ASN.1Cert': bytes.fromhex(cert)}]}
-        byte_message = CERTIFICATE_MESSAGE.to_bytes(data)
-        self._send(byte_message)
+        self._send(data, CERTIFICATE_MESSAGE)
+
+    def _send_certificate_request(self):
+        data = {
+            'certificate_types': [{'ClientCertificateType': b'\xEE'}, {'ClientCertificateType': b'\xEF'}],
+            'supported_signature_algorithms': [
+                {'SignatureAndHashAlgorithm': {'hash': b'\xee', 'signature': b'\xee'}},
+                {'SignatureAndHashAlgorithm': {'hash': b'\xef', 'signature': b'\xef'}}
+            ],
+            'certificate_authorities': b''
+        }
+        self._send(data, CERTIFICATE_REQUEST_MESSAGE)
+
+    def _send_hello_done(self):
+        self._send(b'', SERVER_HELLO_DONE_MESSAGE)
+
+    def _send_change_cipher_spec():
+        self._change_cipher_spec()
+        self._send(CHANGE_CIPHER_SPEC, record_msg_type=CCS_TYPE)
