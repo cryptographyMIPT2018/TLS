@@ -103,6 +103,14 @@ CHANGE_CIPHER_SPEC = b'\x01'
 
 
 def get_history_record(message):
+    """
+    Function which generates history record from byte message
+    Args:
+        message: bytes
+            length no more than 8 KB
+    Returns: bytes
+        append this bytes to HM
+    """
     return history_structure.to_bytes({
         'type': b'\x16',
         'version': {'major': b'\x03', 'minor': b'\x03'},

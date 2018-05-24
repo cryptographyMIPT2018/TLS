@@ -9,15 +9,17 @@ from TLS.record.tls_network import KEY_MAC_TYPE, KEY_ENC_TYPE, IV_TYPE
 from TLS.elliptic.elliptic_curve import Point
 from TLS.certificate.public_keys import public_keys
 from TLS.certificate.certificate import get_private_key_bytes
-from TLM.hash.hash import hash256
-from keg import KEG
+from TLS.PRF.prf import prf256
+from TLS.hash.hash import hash256
 import time
 import random
+from keg import KEG
 from message_structures import SERVER_HELLO_MESSAGE, CLIENT_HELLO_MESSAGE
 from message_structures import CERTIFICATE_MESSAGE, CLIENT_KEY_EXCHANGE_MESSAGE
 from message_structures import CERTIFICATE_REQUEST_MESSAGE, SERVER_HELLO_DONE_MESSAGE
 from message_structures import CERTIFICATE_VERIFY_MESSAGE, FINISHED_MESSAGE
 from message_structures import CHANGE_CIPHER_SPEC
+from message_structures import get_history_record
 
 
 class HandshakeServer:
@@ -42,6 +44,7 @@ class HandshakeServer:
         else:
             byte_message = message_data
         self._network.send(record_msg_type, byte_message)
+        self._hm += get_history_record(byte_message)
 
     def handshake(self):
         self._receive_hello()
@@ -52,6 +55,7 @@ class HandshakeServer:
         self._receive_certificate()
         self._receive_key_exchange()
         self._receive_certificate_verify()
+        self._generate_keys()
         self._receive_change_chipher_spec()
         self._receive_finished()
         self._send_change_cipher_spec()
@@ -105,6 +109,9 @@ class HandshakeServer:
         IV = H[25:(24 + len(H) // 2)]
         self._PMS = KExp15(PMSEXP, k_exp_mac, k_exp_enc, IV)
 
+
+    def _generate_keys(self):
+        self._ms = prf256(self._pms, bytes("extended master secret"), hash256(self._hm))
 
     def _send_hello(self):
         self._r_s = int.to_bytes(int(time.time()), 4, byteorder='big') + os.urandom(28)
@@ -167,3 +174,7 @@ class HandshakeServer:
         record.update_key(KEY_MAC_TYPE, getattr(self, '_k_' + key_type + '_mac_s'))
         record.update_key(KEY_ENC_TYPE, getattr(self, '_k_' + key_type + '_enc_s'))
         record.update_key(IV_TYPE, getattr(self, '_iv_' + key_type + '_s'))
+        record.enable_cipher_mode()
+
+    def _send_finished(self):
+        pass
