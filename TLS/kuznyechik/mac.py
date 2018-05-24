@@ -82,4 +82,4 @@ class CMAC(MAC):
             xor = self._xor(xor, key2)
             code = self.cipher.encrypt(xor)
 
-        return code[:self.code_size]        
+        return code[:self.code_size]

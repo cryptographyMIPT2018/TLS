@@ -11,21 +11,21 @@ sys.path.append(os.path.join(handshake_dir, '../../'))
 from TLS.record.tls_network import HANDSHAKE_TYPE, CCS_TYPE
 from TLS.record.tls_network import KEY_MAC_TYPE, KEY_ENC_TYPE, IV_TYPE
 from TLS.elliptic.elliptic_curve import Point
-from TLS.certificate.public_keys import public_keys
+from TLS.certificates.public_keys import public_keys
 from TLS.PRF.prf import prf256
 from TLS.hash.hash import hash256
-from TLS.certificate.certificate import get_private_key_bytes, verify_certificate
+from TLS.certificates.certificate import get_private_key_bytes, verify_certificate
 from TLS.signature.signature import Signer
 from TLS.elliptic.elliptic_curve import EllipticCurve
 from TLS.kexp_kimp.kexp import expand_key as KExp15
-from keg import KEG
-from constants import KEY_LENGTH, BLOCK_LENGTH
-from message_structures import SERVER_HELLO_MESSAGE, CLIENT_HELLO_MESSAGE
-from message_structures import CERTIFICATE_MESSAGE, CLIENT_KEY_EXCHANGE_MESSAGE
-from message_structures import CERTIFICATE_REQUEST_MESSAGE, SERVER_HELLO_DONE_MESSAGE
-from message_structures import CERTIFICATE_VERIFY_MESSAGE, FINISHED_MESSAGE
-from message_structures import CHANGE_CIPHER_SPEC
-from message_structures import get_history_record
+from .keg import KEG
+from .constants import KEY_LENGTH, BLOCK_LENGTH
+from .message_structures import SERVER_HELLO_MESSAGE, CLIENT_HELLO_MESSAGE
+from .message_structures import CERTIFICATE_MESSAGE, CLIENT_KEY_EXCHANGE_MESSAGE
+from .message_structures import CERTIFICATE_REQUEST_MESSAGE, SERVER_HELLO_DONE_MESSAGE
+from .message_structures import CERTIFICATE_VERIFY_MESSAGE, FINISHED_MESSAGE
+from .message_structures import CHANGE_CIPHER_SPEC
+from .message_structures import get_history_record
 
 
 class HandshakeServer:
@@ -65,7 +65,7 @@ class HandshakeServer:
         bytes_str = self._receive()
         client_hello_message = CLIENT_HELLO_MESSAGE.parse_bytes(bytes_str)
         self._r_c = client_hello_message["random"]
-        self._HM += get_history_record(bytes_str)
+        self._hm += get_history_record(bytes_str)
 
     def _receive_certificate(self):
         bytes_str = self._receive()
@@ -73,7 +73,7 @@ class HandshakeServer:
         cert = certificate_message["certificate_list"][0]['ASN.1Cert']
         if not verify_certificate(cert):
             raise ValueError("Wrong cert")
-        self._HM += get_history_record(bytes_str)
+        self._hm += get_history_record(bytes_str)
 
     def _receive_key_exchange(self):
         bytes_str = self._receive()
@@ -112,20 +112,30 @@ class HandshakeServer:
         k_exp_enc = keg_res[len(keg_res) // 2:]
         IV = H[25:(24 + BLOCK_LENGTH // 2)]
         self._PMS = KExp15(PMSEXP, k_exp_mac, k_exp_enc, IV)
-        self._HM += get_history_record(bytes_str)
+        self._hm += get_history_record(bytes_str)
 
     def _receive_certificate_verify(self):
         bytes_str = self._receive()
         certificate_verify_message = CERTIFICATE_VERIFY_MESSAGE.parse_bytes(bytes_str)
         sign = certificate_verify_message.signature
         signer = Signer(EllipticCurve("C"))
-        if not signer.check(self._HM, sign):
+        if not signer.check(self._hm, sign):
             raise ValueError("Wrong sign")
-        self._HM += get_history_record(bytes_str)
+        self._hm += get_history_record(bytes_str)
 
     def _receive_change_chipher_spec(self):
         self._receive(record_msg_type=CCS_TYPE)
-        self._change_cipher_spec('read')
+        self._change_cipher_spec('reader')
+        self._hm += get_history_record("\x01")
+
+    def _receive_finished(self):
+        bytes_str = self._receive()
+        finished_message = FINISHED_MESSAGE.parse_bytes(bytes_str)
+        client_verify_data = finished_message['verify_data']
+        expected_client_verify_data = prf256(self._ms, bytes("client_finished", 'utf-8'), hash256(self._hm), 1)
+        assert client_verify_data == expected_client_verify_data
+        self._hm += get_history_record(bytes_str)
+
 
     def _generate_keys(self):
         self._ms = prf256(self._pms, bytes("extended master secret", 'utf-8'), hash256(self._hm), 2)[:48]

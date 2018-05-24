@@ -10,14 +10,14 @@ from TLS.kuznyechik.block_cipher import *
 class BlockCipherMode:
     def __init__(self, block_cipher: BlockCipher):
         self.cipher = block_cipher
-        
+
     def encrypt(self, plain_text: bytes, key: bytes, **kwargs) -> bytes:
         return plain_text
-    
+
     def decrypt(self, cipher_text: bytes, key: bytes, **kwargs) -> bytes:
         return cipher_text
-    
-    
+
+
 class CTR_ACPKM(BlockCipherMode):
     def __init__(self, block_cipher: BlockCipher, section_size: int, gamma_block_size: int):
         """
@@ -28,11 +28,11 @@ class CTR_ACPKM(BlockCipherMode):
         assert(block_cipher.key_size % block_cipher.block_size == 0)
         assert(section_size % block_cipher.block_size == 0)
         assert(block_cipher.block_size % gamma_block_size == 0)
-        
+
         BlockCipherMode.__init__(self, block_cipher)
         self.section_size = section_size
         self.gamma_block_size = gamma_block_size
-        
+
     def _acpkm(self) -> bytes:
         key = list(range(128, 128 + 32))
         offset = 0
@@ -41,7 +41,7 @@ class CTR_ACPKM(BlockCipherMode):
             key[offset : next_offset] = self.cipher.encrypt(bytes(key[offset : next_offset]))
             offset = next_offset
         self.cipher.set_key(bytes(key))
-    
+
     def _inc(self, vector: bytes) -> bytes:
         vector = list(vector)
         for i in range(len(vector)):
@@ -51,16 +51,16 @@ class CTR_ACPKM(BlockCipherMode):
                 vector[-i - 1] += 1
                 break
         return bytes(vector)
-    
+
     def _xor(self, u: bytes, v: bytes) -> bytes:
         res = []
         for a, b in zip(u, v):
             res.append(a ^ b)
         return bytes(res)
-        
+
     def encrypt(self, plain_text: bytes, key: bytes, initialization_vector: bytes) -> bytes:
         assert(len(initialization_vector) == self.cipher.block_size / 2)
-        
+
         cipher_text = []
         offset = 0
         section_count = (len(plain_text) + self.section_size - 1) // self.section_size
@@ -75,6 +75,6 @@ class CTR_ACPKM(BlockCipherMode):
                 ctr = self._inc(ctr)
             self._acpkm()
         return bytes(cipher_text)
-    
+
     def decrypt(self, cipher_text: bytes, key: bytes, initialization_vector: bytes) -> bytes:
         return self.encrypt(cipher_text, key, initialization_vector)

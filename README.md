@@ -1,6 +1,7 @@
 # TLS
 realization of Russian TLS 1.2
 
+* [Install requirements](#install-requirements)
 * [Agreements](#agreements)
 * [Lectures](#lectures)
 * [Task (part 1)](#task-part-1)
@@ -13,6 +14,13 @@ realization of Russian TLS 1.2
   * [Группа 3](#3-group)
 * [Key pair generation](#key-pair-generation)
   * [ID table](#id-table)
+
+## Install requirements
+```
+pip3 install -r requirements.txt
+cd TLS/kuznyechik
+python3 setup.py build_ext --inplace
+```
 
 ## Agreements
 * Languange: python3
