@@ -31,7 +31,7 @@ class HandshakeServer:
                     message_type
                 )
             )
-        return self._decode(message)
+        return message
 
     def _send(self, message_data, message_structures=None, record_msg_type=HANDSHAKE_TYPE):
         if message_structures is None:
@@ -54,9 +54,21 @@ class HandshakeServer:
         self._send_change_cipher_spec()
         self._send_finished()
 
-    def receive_hello(self):
-        hello_message = self._receive()
-        self._r_c = hello_message["r_c"]
+    def _receive_hello(self):
+        client_hello_message = CLIENT_HELLO_MESSAGE.parse_bytes(self._receive())
+        self._r_c = client_hello_message["random"]
+
+    def _receive_certificate(self):
+        certificate_message = CERTIFICATE_MESSAGE.parse_bytes(self._receive())
+        cert = certificate_message["certificate_list"][0]['ASN.1Cert']
+        client_id = cert[:1]
+        point = Point.from_bytes(cert[1:])
+        public_key = public_keys[id]
+
+    def _receive_key_exchange(self):
+        key_exchange_message = CLIENT_KEY_EXCHANGE_MESSAGE.parse_bytes(self._receive())
+
+
 
     def _send_hello(self):
         self._r_s = int.to_bytes(int(time.time()), 4, byteorder='big') + os.urandom(28)
