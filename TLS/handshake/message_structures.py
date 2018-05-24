@@ -20,7 +20,10 @@ class HandshakeMessageStructure:
         return bytes_str[:1]
 
 
-server_version_structure = NoLengthStructure([FixedLenStructure('major', 1), FixedLenStructure('minor', 1)], 'server_version')
+def _get_version_structure(name):
+    return NoLengthStructure([FixedLenStructure('major', 1), FixedLenStructure('minor', 1)], name)
+
+
 random_structure = FixedLenStructure('random', 32)
 session_id_structure = VariableLenStructure('session_id', 1)
 cipher_suite = FixedLenStructure('cipher_suite', 2)
@@ -49,7 +52,7 @@ signature_algorithms_extension_structure = NoLengthStructure([
 
 
 server_hello_children = [
-    server_version_structure,
+    _get_version_structure('server_version'),
     random_structure,
     session_id_structure,
     cipher_suite,
@@ -62,7 +65,7 @@ server_hello_children = [
 ]
 
 client_hello_children = [
-    server_version_structure,
+    _get_version_structure('client_version'),
     random_structure,
     session_id_structure,
     cipher_suites,
@@ -86,6 +89,7 @@ certificate_verify_children = [
     NoLengthStructure([FixedLenStructure('hash', 1), FixedLenStructure('signature', 1)], 'algorithm'),
     VariableLenStructure('signature', 2)
 ]
+history_structure = NoLengthStructure([FixedLenStructure('type', 1), _get_version_structure('version'), VariableLenStructure('fragment', 2)])
 
 SERVER_HELLO_MESSAGE = HandshakeMessageStructure(b'\x02', server_hello_children)
 CLIENT_HELLO_MESSAGE = HandshakeMessageStructure(b'\x01', client_hello_children)
@@ -96,3 +100,11 @@ SERVER_HELLO_DONE_MESSAGE = HandshakeMessageStructure(b'\x0e', [])
 FINISHED_MESSAGE = HandshakeMessageStructure(b'\x14', [FixedLenStructure('verify_data', 32)])
 CERTIFICATE_VERIFY_MESSAGE = HandshakeMessageStructure(b'\x0f', certificate_verify_children)
 CHANGE_CIPHER_SPEC = b'\x01'
+
+
+def get_history_record(message):
+    return history_structure.to_bytes({
+        'type': b'\x16',
+        'version': {'major': b'\x03', 'minor': b'\x03'},
+        'fragment': message
+    })
