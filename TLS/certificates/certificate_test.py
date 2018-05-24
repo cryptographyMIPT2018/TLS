@@ -5,7 +5,7 @@ cert_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(cert_dir, '../../'))
 
 from TLS.elliptic.elliptic_curve import Point
-from TLS.certificates.certificate import get_public_key, get_certificate_bytes, get_id, verify_certificate
+from TLS.certificates.certificate import get_public_key, get_certificate_bytes, get_id, verify_certificate, get_private_key_bytes
 import unittest
 
 
@@ -32,6 +32,11 @@ class TestCertificateFunctions(unittest.TestCase):
     def test_verify_certificate(self):
         self.assertFalse(verify_certificate(self.fake_cert_bytes))
         self.assertTrue(verify_certificate(self.valid_cert_bytes))
+
+    def test_get_private_key_bytes(self):
+        private_key_bytes = get_private_key_bytes()
+        self.assertIsInstance(private_key_bytes, bytes)
+        self.assertTrue(len(private_key_bytes), 64)
 
 
 if __name__ == '__main__':

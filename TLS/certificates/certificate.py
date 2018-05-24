@@ -5,6 +5,7 @@ cert_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(cert_dir, '../../'))
 
 from .public_keys import public_keys
+from .private_key import private_key
 from TLS.elliptic.elliptic_curve import Point
 
 
@@ -56,3 +57,7 @@ def verify_certificate(certificate_bytes):
     cert_public_key = get_public_key(certificate_bytes)
 
     return user_public_key == cert_public_key
+
+
+def get_private_key_bytes():
+    return int.to_bytes(private_key, 64, 'big')
