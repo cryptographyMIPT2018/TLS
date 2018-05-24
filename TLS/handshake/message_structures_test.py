@@ -1,8 +1,15 @@
 import unittest
-from message_structures import SERVER_HELLO_MESSAGE, CLIENT_HELLO_MESSAGE
-from message_structures import CERTIFICATE_MESSAGE, CLIENT_KEY_EXCHANGE_MESSAGE
-from message_structures import CERTIFICATE_REQUEST_MESSAGE, SERVER_HELLO_DONE_MESSAGE
-from message_structures import CERTIFICATE_VERIFY_MESSAGE, FINISHED_MESSAGE
+import sys
+import os
+
+handshake_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(handshake_dir, '../../'))
+
+from TLS.handshake.message_structures import SERVER_HELLO_MESSAGE, CLIENT_HELLO_MESSAGE
+from TLS.handshake.message_structures import CERTIFICATE_MESSAGE, CLIENT_KEY_EXCHANGE_MESSAGE
+from TLS.handshake.message_structures import CERTIFICATE_REQUEST_MESSAGE, SERVER_HELLO_DONE_MESSAGE
+from TLS.handshake.message_structures import CERTIFICATE_VERIFY_MESSAGE, FINISHED_MESSAGE
+from TLS.handshake.message_structures import get_history_record
 
 
 class TestServerHello(unittest.TestCase):
@@ -33,7 +40,7 @@ class TestServerHello(unittest.TestCase):
 class TestClientHello(unittest.TestCase):
     bytes_str = bytes.fromhex("01 00 00 3C 03 03 93 3E A2 1E C3 80 2A 56 15 50 EC 78 D6 ED 51 AC 24 39 D7 E7 49 C3 1B C3 A3 45 61 65 88 96 84 CA 00 00 04 FF 88 FF 89 01 00 00 0F 00 0D 00 06 00 04 EE EE EF EF FF 01 00 01 00")
     data = {
-        'server_version': {'major': b'\x03', 'minor': b'\x03'},
+        'client_version': {'major': b'\x03', 'minor': b'\x03'},
         'random': bytes.fromhex('933EA21EC3802A561550EC78D6ED51AC2439D7E749C31BC3A3456165889684CA'),
         'session_id': b'',
         'cipher_suites': [{'CipherSuite': bytes.fromhex('FF88')}, {'CipherSuite': bytes.fromhex('FF89')}],
@@ -152,6 +159,22 @@ class TestCertificateVerify(unittest.TestCase):
     def test_parse_bytes(self):
         result = CERTIFICATE_VERIFY_MESSAGE.parse_bytes(self.bytes_str)
         self.assertDictEqual(result, self.data)
+
+
+class TestGetHistoryRecord(unittest.TestCase):
+    def test(self):
+        messages = [
+            '0200003D0303933EA21E49C31BC3A3456165889684CAA5576CE7924A24F58113808DBD9EF85610C3802A561550EC78D6ED51AC2439D7E7FF88000005FF01000100',
+            '0100003C0303933EA21EC3802A561550EC78D6ED51AC2439D7E749C31BC3A3456165889684CA000004FF88FF890100000F000D00060004EEEEEFEFFF01000100',
+        ]
+        answers = [
+            "16 03 03 00 41 02 00 00 3D 03 03 93 3E A2 1E 49 C3 1B C3 A3 45 61 65 88 96 84 CA A5 57 6C E7 92 4A 24 F5 81 13 80 8D BD 9E F8 56 10 C3 80 2A 56 15 50 EC 78 D6 ED 51 AC 24 39 D7 E7 FF 88 00 00 05 FF 01 00 01 00",
+            "16 03 03 00 40 01 00 00 3C 03 03 93 3E A2 1E C3 80 2A 56 15 50 EC 78 D6 ED 51 AC 24 39 D7 E7 49 C3 1B C3 A3 45 61 65 88 96 84 CA 00 00 04 FF 88 FF 89 01 00 00 0F 00 0D 00 06 00 04 EE EE EF EF FF 01 00 01 00",
+        ]
+        for ans, mes in zip(answers, messages):
+            ans = bytes.fromhex(ans)
+            mes = bytes.fromhex(mes)
+            self.assertEqual(ans, get_history_record(mes))
 
 
 if __name__ == '__main__':

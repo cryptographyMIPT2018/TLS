@@ -1,8 +1,14 @@
 import socket
-from ..kuznyechik.mac import CMAC
-from ..kuznyechik.block_cipher import Kuznyechik
-from ..kuznyechik.block_cipher_mode import CTR_ACPKM
-from ..KDF.kdf import KDF_TREE_256
+import os
+import sys
+
+tls_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(tls_dir, '../../'))
+
+from TLS.kuznyechik.mac import CMAC
+from TLS.kuznyechik.block_cipher import Kuznyechik
+from TLS.kuznyechik.block_cipher_mode import CTR_ACPKM
+from TLS.KDF.kdf import KDF_TREE_256
 
 HANDSHAKE_TYPE = 'Handshake'
 ALERT_TYPE = 'Alert'
@@ -25,7 +31,7 @@ class TLSBasetext:
         self.length = len(message)
 
     def to_bytes(self):
-        return self.msg_type + self.protocol + str.encode(str(self.length)) + self.message
+        return self.msg_type + self.protocol + self.length.to_bytes(2, byteorder='bigrec    ') + self.message
 
 
 class TLSPlaintext(TLSBasetext):
@@ -62,6 +68,12 @@ class Record:
         for key_type in KEY_TYPES:
             setattr(self, '_' + key_type, None)
         self._is_cipher_mode = False
+
+    def _and(self, lhs, rhs):
+        res = b''
+        for l, r in zip(lhs, rhs):
+            res += bytes([l & r])
+        return res
 
     def _create_plaintext(self, msg_type, fragment, text_type='plain'):
         type2byte = {CCS_TYPE: b'\x14',
@@ -103,11 +115,12 @@ class Record:
         return KDF_TREE_256(k, str.encode('level' + str(level)), d, r, l, self._seqnum + 1)
 
     def _tlstree(self, key, i):
-        c1 = int.from_bytes(b'\xff\xff\xff\xff\x00\x00\x00\x00', byteorder='big')
-        c2 = int.from_bytes(b'\xff\xff\xff\xff\xff\xf8\x00\x00', byteorder='big')
-        c3 = int.from_bytes(b'\xff\xff\xff\xff\xff\xff\xff\xc0', byteorder='big')
-        return self._diver(3, self._diver(2, self._diver(1, key, (i & c1).to_bytes(8, byteorder='big')),
-            (i & c2).to_bytes(8, byteorder='big')),(i & c3).to_bytes(8, byteorder='big'))
+        c1 = b'\xff\xff\xff\xff\x00\x00\x00\x00'
+        c2 = b'\xff\xff\xff\xff\xff\xf8\x00\x00'
+        c3 = b'\xff\xff\xff\xff\xff\xff\xff\xc0'
+        byte_i = i.to_bytes(8, byteorder='big')
+        return self._diver(3, self._diver(2, self._diver(1, key, self._and(byte_i, c1)),
+            self._and(byte_i, c2)),self._and(byte_i, c3))
 
 
 class Writer(Record):
