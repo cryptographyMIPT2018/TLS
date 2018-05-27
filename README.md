@@ -17,7 +17,7 @@ realization of Russian TLS 1.2
 
 ## Install requirements
 ```
-pip3 install -r requirements.txt
+python3 setup.py install
 cd TLS/kuznyechik
 python3 setup.py build_ext --inplace
 ```
